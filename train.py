@@ -159,9 +159,9 @@ def main(rank, world_size):
                     epoch_metrics.ssims.append(ssim_index)
                     epoch_metrics.psnrs.append(psnr_value)
 
-            # Save plots of metrics
-            save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
-            save_plots(epoch_metrics.ious, "IOU", epoch)
+            if rank == 0:
+                save_plots(metrics, "Dice Coefficient", epoch)
+                save_plots(metrics, "IOU", epoch)
 
             # Update learning rate
             scheduler_G.step()
@@ -177,4 +177,5 @@ def main(rank, world_size):
 
 
 if __name__ == "__main__":
-    main()
+    world_size = torch.cuda.device_count()
+    torch.multiprocessing.spawn(main, args=(world_size,), nprocs=world_size)
