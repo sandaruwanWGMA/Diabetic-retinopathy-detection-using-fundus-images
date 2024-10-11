@@ -1,3 +1,7 @@
+import os
+
+os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments"
+
 import torch
 from torch import optim
 from torch.utils.data import DataLoader
