@@ -55,7 +55,7 @@ def main():
     scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
 
     # Define the path to the base directory containing both Low-Res and High-Res directories
-    base_dir = "./MRI Dataset"
+    base_dir = "/kaggle/input/high-res-and-low-res-without-resample/Not Resampled"
 
     # Create the dataset and dataloader
     mri_dataset = MRIDataset(base_dir)
@@ -140,16 +140,11 @@ def main():
             epoch_metrics.specificities.append(specificity)
 
             # Logging
-            # if (i + 1) % 20 == 0:
-            #     print(
-            #         f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(dataloader)}], "
-            #         f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
-            #     )
-
-            print(
-                f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
-                f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
-            )
+            if (i + 1) % 20 == 0:
+                print(
+                    f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
+                    f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
+                )
 
             epoch_metrics.losses.append((loss_G.item() + loss_D.item()) / 2)
             training_loss_accum += loss_G.item()
