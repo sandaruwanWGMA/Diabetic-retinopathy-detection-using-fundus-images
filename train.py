@@ -198,9 +198,10 @@ def main():
     save_metrics_plot(
         train_loss,  # Training losses
         val_loss,  # Validation loss for the epoch
+        "Loss vs No of Epoches",
         "Epoches",
         "Loss",
-        num_epochs,
+        num_epochs=num_epochs,
     )
 
     # Save models for later use
