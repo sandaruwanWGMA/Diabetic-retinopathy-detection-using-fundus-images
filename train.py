@@ -150,6 +150,7 @@ def main():
         generator.eval()
         discriminator.eval()
         with torch.no_grad():
+            val_loss_accum = 0
             for val_data in val_loader:
                 print("Checkpoint 02")
                 high_res_images, low_res_images = val_data[1], val_data[0]
@@ -161,9 +162,10 @@ def main():
                 epoch_metrics.ssims.append(ssim_index)
                 epoch_metrics.psnrs.append(psnr_value)
                 print("Checkpoint 03")
+                temp = discriminator(fake_input_G)
                 loss_G_val = criterion(
-                    discriminator(fake_input_G),
-                    torch.ones_like(discriminator(fake_input_G)),
+                    temp,
+                    torch.ones_like(temp),
                 )
                 val_loss_accum += loss_G_val.item()
 
