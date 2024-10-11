@@ -66,9 +66,12 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
 
     num_epochs = 3
+    train_loss = []
+    val_loss = []
     for epoch in range(num_epochs):
         # Reset or initialize metrics for the epoch
         epoch_metrics = MetricTracker()
+        training_loss_accum = 0
 
         for i, data in enumerate(train_loader, 0):
             high_res_images = data[1]
@@ -145,6 +148,9 @@ def main():
             )
 
             epoch_metrics.losses.append((loss_G.item() + loss_D.item()) / 2)
+            training_loss_accum += loss_G.item()
+
+        train_loss.append(training_loss_accum / len(train_loader))
 
         # Validation loop
         generator.eval()
@@ -170,6 +176,7 @@ def main():
                 val_loss_accum += loss_G_val.item()
 
             epoch_metrics.losses.append(val_loss_accum / len(val_loader))
+            val_loss.append(val_loss_accum / len(val_loader))
 
         print("Checkpoint 04")
         # Save plots of metrics
@@ -183,19 +190,18 @@ def main():
         # Plotting and saving loss plots
         print("Training losses: ", epoch_metrics.losses[:-1])
         print("Validation losses: ", [epoch_metrics.losses[-1]])
-        save_metrics_plot(
-            epoch_metrics.losses[:-1],  # Training losses
-            [epoch_metrics.losses[-1]],  # Validation loss for the epoch
-            "Loss",
-            "Epoch",
-            "Loss",
-            epoch,
-            folder="results",
-        )
 
         # Update learning rate
         scheduler_G.step()
         scheduler_D.step()
+
+    save_metrics_plot(
+        train_loss,  # Training losses
+        val_loss,  # Validation loss for the epoch
+        "Epoches",
+        "Loss",
+        num_epochs,
+    )
 
     # Save models for later use
     # torch.save(generator.state_dict(), "generator.pth")

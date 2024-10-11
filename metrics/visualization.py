@@ -26,8 +26,20 @@ def save_plots(metrics, title, epoch, folder="results"):
 import matplotlib.pyplot as plt
 
 
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+
 def save_metrics_plot(
-    train_metrics, val_metrics, title, xlabel, ylabel, epoch, folder="results"
+    train_metrics,
+    val_metrics,
+    title,
+    xlabel,
+    ylabel,
+    num_epochs,
+    folder="results",
+    step=2,
 ):
     """
     Saves a plot comparing training and validation metrics over epochs.
@@ -38,18 +50,21 @@ def save_metrics_plot(
     title (str): The title of the plot.
     xlabel (str): The label for the x-axis.
     ylabel (str): The label for the y-axis.
-    epoch (int): The current epoch, used for naming the file.
+    num_epochs (int): The total number of epochs.
     folder (str): The directory to save the plot.
+    step (int): The step between x-axis ticks.
     """
     os.makedirs(folder, exist_ok=True)
     plt.figure()
-    plt.plot(range(len(train_metrics)), train_metrics, label="Train")
-    plt.plot(range(len(val_metrics)), val_metrics, label="Validation")
-    plt.title(f"{title} Over Epochs")
+    plt.plot(np.arange(1, len(train_metrics) + 1), train_metrics, label="Train")
+    plt.plot(np.arange(1, len(val_metrics) + 1), val_metrics, label="Validation")
+    plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+
+    # Set x-axis ticks
+    plt.xticks(np.arange(1, num_epochs + 1, step))
+
     plt.legend()
-    plt.savefig(
-        os.path.join(folder, f"{title.lower().replace(' ', '_')}_epoch_{epoch}.png")
-    )
+    plt.savefig(os.path.join(folder, f"{title.replace(' ', '_').lower()}.png"))
     plt.close()
