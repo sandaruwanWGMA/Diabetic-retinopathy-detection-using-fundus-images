@@ -110,15 +110,15 @@ def main():
             # =================
             # Update generator
             # =================
-            # generator.zero_grad()
+            generator.zero_grad()
 
             # We calculate the loss based on the generator's fake output.
-            # fake_input_G = torch.cat((fake_images, high_res_images), dim=1)
-            # fake_pred_G = discriminator(fake_input_G)
-            # loss_G = criterion(fake_pred_G, True)
+            fake_input_G = torch.cat((fake_images, high_res_images), dim=1)
+            fake_pred_G = discriminator(fake_input_G)
+            loss_G = criterion(fake_pred_G, True)
 
-            # loss_G.backward()
-            # opt_G.step()
+            loss_G.backward()
+            opt_G.step()
 
             # Calculate and record metrics
             # epoch_metrics.dices.append(calculate_dice(fake_images, high_res_images))
