@@ -120,6 +120,8 @@ def main():
             loss_G.backward()
             opt_G.step()
 
+            print("Generator checkpoint 01")
+
             # Calculate and record metrics
             # epoch_metrics.dices.append(calculate_dice(fake_images, high_res_images))
             # epoch_metrics.ious.append(calculate_iou(fake_images, high_res_images))
