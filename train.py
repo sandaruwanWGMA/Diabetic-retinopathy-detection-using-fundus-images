@@ -65,7 +65,7 @@ def main():
     # train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
     # val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
 
-    num_epochs = 20
+    num_epochs = 1
     for epoch in range(num_epochs):
         # Reset or initialize metrics for the epoch
         epoch_metrics = MetricTracker()
