@@ -37,8 +37,8 @@ def main():
     device = setup_device()
 
     # Initialize the generator and discriminator
-    generator = CustomUNet().to(device)
-    discriminator = CustomResnet().to(device)
+    generator = CustomUNet()
+    discriminator = CustomResnet()
 
     # Initialize Metric Tracker
     metrics = MetricTracker()
