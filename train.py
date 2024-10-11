@@ -1,3 +1,4 @@
+import os
 import torch
 from torch import optim
 from torch.utils.data import DataLoader
@@ -160,4 +161,6 @@ def main():
 
 
 if __name__ == "__main__":
+    # Set the environment variable
+    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments"
     main()
