@@ -145,28 +145,28 @@ def main():
             )
 
         # Validation loop
-        # generator.eval()
-        # discriminator.eval()
-        # with torch.no_grad():
-        #     for val_data in val_loader:
-        #         high_res_images, low_res_images = val_data[1].to(device), val_data[
-        #             0
-        #         ].to(device)
+        generator.eval()
+        discriminator.eval()
+        with torch.no_grad():
+            for val_data in dataloader:
+                high_res_images, low_res_images = val_data[1].to(device), val_data[
+                    0
+                ].to(device)
 
-        #         pred = generator(low_res_images)
-        #         ssim_index, psnr_value = calculate_ssim_psnr(
-        #             pred, high_res_images, data_range=1.0
-        #         )
-        #         epoch_metrics.ssims.append(ssim_index)
-        #         epoch_metrics.psnrs.append(psnr_value)
+                pred = generator(low_res_images)
+                ssim_index, psnr_value = calculate_ssim_psnr(
+                    pred, high_res_images, data_range=1.0
+                )
+                epoch_metrics.ssims.append(ssim_index)
+                epoch_metrics.psnrs.append(psnr_value)
 
         # Save plots of metrics
-        # save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
-        # save_plots(epoch_metrics.ious, "IOU", epoch)
+        save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
+        save_plots(epoch_metrics.ious, "IOU", epoch)
 
         # Update learning rate
-        # scheduler_G.step()
-        # scheduler_D.step()
+        scheduler_G.step()
+        scheduler_D.step()
 
     # Save models for later use
     # torch.save(generator.state_dict(), "generator.pth")
