@@ -133,11 +133,16 @@ def main():
             epoch_metrics.specificities.append(specificity)
 
             # Logging
-            if (i + 1) % 20 == 0:
-                print(
-                    f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(dataloader)}], "
-                    f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
-                )
+            # if (i + 1) % 20 == 0:
+            #     print(
+            #         f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(dataloader)}], "
+            #         f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
+            #     )
+
+            print(
+                f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(dataloader)}], "
+                f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
+            )
 
         # Validation loop
         # generator.eval()
