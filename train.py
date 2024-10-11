@@ -140,14 +140,19 @@ def main():
             epoch_metrics.specificities.append(specificity)
 
             # Logging
-            if (i + 1) % 2 == 0:
-                print(
-                    f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
-                    f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
-                )
+            # if (i + 1) % 2 == 0:
+            #     print(
+            #         f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
+            #         f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
+            #     )
 
             epoch_metrics.losses.append((loss_G.item() + loss_D.item()) / 2)
             training_loss_accum += loss_G.item()
+
+        print(
+            f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
+            f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
+        )
 
         train_loss.append(training_loss_accum / len(train_loader))
         epoch_metrics_dices.append(dice / len(train_loader))

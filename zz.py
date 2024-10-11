@@ -22,7 +22,7 @@ from metrics.metrics import (
 )
 
 from metrics.save_image_triplets import save_image_triplets
-from metrics.visualization import save_plots
+from metrics.visualization import save_plots, save_metrics_plot
 
 # Import Custom Dataset
 from data.dataloader import MRIDataset
@@ -33,33 +33,34 @@ def setup_device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-device = setup_device()
+def main():
+    device = setup_device()
 
-# Initialize the generator and discriminator
-generator = CustomUNet()
-discriminator = CustomResnet()
+    # Initialize the generator and discriminator
+    generator = CustomUNet()
+    discriminator = CustomResnet()
 
-# Initialize Metric Tracker
-metrics = MetricTracker()
+    # Initialize Metric Tracker
+    metrics = MetricTracker()
 
-# Optimizers
-opt_G = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
-opt_D = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    # Optimizers
+    opt_G = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    opt_D = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
-# Losses
-criterion = GANLoss(gan_mode="lsgan")
+    # Losses
+    criterion = GANLoss(gan_mode="lsgan")
 
-# Learning rate schedulers
-scheduler_G = get_scheduler(opt_G, {"lr_policy": "step", "lr_decay_iters": 10})
-scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
+    # Learning rate schedulers
+    scheduler_G = get_scheduler(opt_G, {"lr_policy": "step", "lr_decay_iters": 10})
+    scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
 
-# Define the path to the base directory containing both Low-Res and High-Res directories
-base_dir = "./MRI Dataset"
+    # Define the path to the base directory containing both Low-Res and High-Res directories
+    base_dir = "/kaggle/input/high-res-and-low-res-without-resample/Not Resampled"
 
-# Create the dataset and dataloader
-mri_dataset = MRIDataset(base_dir)
-dataloader = DataLoader(mri_dataset, batch_size=1, shuffle=True)  # TEMPORARY
+    # Create the dataset and dataloader
+    mri_dataset = MRIDataset(base_dir)
+    # dataloader = DataLoader(mri_dataset, batch_size=1, shuffle=True)  # TEMPORARY
 
-
-for val_data in dataloader:
-    print(val_data[1].shape)
+    train_dataset, val_dataset, _ = split_dataset(mri_dataset)
+    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
