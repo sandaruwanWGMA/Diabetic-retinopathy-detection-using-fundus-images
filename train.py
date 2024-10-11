@@ -65,20 +65,20 @@ def main():
     # train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
     # val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
 
-    num_epochs = 50
+    num_epochs = 20
     for epoch in range(num_epochs):
         # Reset or initialize metrics for the epoch
         # epoch_metrics = MetricTracker()
 
         for i, data in enumerate(dataloader, 0):
-            # high_res_images = data[1].to(device)
-            # low_res_images = data[0].to(device)
+            high_res_images = data[1].to(device)
+            low_res_images = data[0].to(device)
 
             # Generate fake images from low-res images
             # fake_images = generator(low_res_images)
 
             # Prepare data for the discriminator
-            # real_input = torch.cat((high_res_images, high_res_images), dim=1)
+            real_input = torch.cat((high_res_images, high_res_images), dim=1)
             # fake_input = torch.cat((fake_images.detach(), high_res_images), dim=1)
 
             # ===================
