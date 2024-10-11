@@ -6,7 +6,7 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from networks import CustomUpsamplingSlicesBlock
+from networks import CustomSigmoidBlock
 
 sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -24,27 +24,32 @@ class CustomResnet(nn.Module):
         for param in model.parameters():
             param.requires_grad = False
 
-        # Modify the first convolutional layer to accept 1 input channel
+        # Modify the first convolutional layer to accept 2 input channels
         old_conv = model.stem[0]
         self.first_conv = nn.Conv3d(
-            1,
+            2,  # Change here from 1 to 2 for two input channels
             old_conv.out_channels,
             kernel_size=old_conv.kernel_size,
             stride=old_conv.stride,
             padding=old_conv.padding,
             bias=False,
         )
-        self.first_conv.weight.data = old_conv.weight.data.mean(dim=1, keepdim=True)
+
+        # Initialize the weights for the new two-channel input by copying the original weights
+        # Repeat weights across the two channels or use a mean if appropriate
+        self.first_conv.weight.data = old_conv.weight.data.mean(
+            dim=1, keepdim=True
+        ).repeat(1, 2, 1, 1, 1)
 
         # Copy the modified first conv layer back to the stem
         model.stem[0] = self.first_conv
 
-        self.features = nn.Sequential(*list(model.children())[:-2])
+        self.features = nn.Sequential(*list(model.children())[:-1])
 
-        self.custom_upsampling_slices_block = CustomUpsamplingSlicesBlock()
+        self.custom_sigmoid_block = CustomSigmoidBlock()
 
     def forward(self, x):
         # Forward pass through the modified features
         x = self.features(x)
-        x = self.custom_upsampling_slices_block(x)
+        x = self.custom_sigmoid_block(x)
         return x

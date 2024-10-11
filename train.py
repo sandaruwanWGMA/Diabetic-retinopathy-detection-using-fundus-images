@@ -32,28 +32,12 @@ def setup_device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-import torch
-import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.data.distributed import DistributedSampler
-
-
-def cleanup():
-    dist.destroy_process_group()
-
-
-def setup(rank, world_size):
-    dist.init_process_group("nccl", rank=rank, world_size=world_size)
-    torch.cuda.set_device(rank)
-
-
-def main(rank, world_size):
-    setup(rank, world_size)
+def main():
     device = setup_device()
 
     # Initialize the generator and discriminator
-    generator = DDP(generator, device_ids=[rank])
-    discriminator = DDP(discriminator, device_ids=[rank])
+    generator = CustomUNet().to(device)
+    discriminator = CustomResnet().to(device)
 
     # Initialize Metric Tracker
     metrics = MetricTracker()
@@ -76,43 +60,35 @@ def main(rank, world_size):
     mri_dataset = MRIDataset(base_dir)
 
     train_dataset, val_dataset, _ = split_dataset(mri_dataset)
-    # train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-    # val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
-
-    train_sampler = DistributedSampler(
-        train_dataset, num_replicas=world_size, rank=rank
-    )
-    train_loader = DataLoader(
-        train_dataset, batch_size=8, shuffle=False, sampler=train_sampler
-    )
-    val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank)
-    val_loader = DataLoader(
-        val_dataset, batch_size=5, shuffle=False, sampler=val_sampler
-    )
+    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
 
     num_epochs = 50
     for epoch in range(num_epochs):
-        train_sampler.set_epoch(epoch)
-
         # Reset or initialize metrics for the epoch
         epoch_metrics = MetricTracker()
 
         for i, data in enumerate(train_loader, 0):
-            print(f"Value of i: {i}")
             high_res_images = data[1].to(device)
-            low_res_images = data[1].to(device)
+            low_res_images = data[0].to(device)
+
+            # Generate fake images from low-res images
+            fake_images = generator(low_res_images)
+
+            # Prepare data for the discriminator
+            real_input = torch.cat((high_res_images, high_res_images), dim=1)
+            fake_input = torch.cat((fake_images.detach(), high_res_images), dim=1)
 
             # ===================
             # Update discriminator
             # ===================
             discriminator.zero_grad()
-            # Train with real MRI images
-            real_pred = discriminator(high_res_images)
+            real_pred = discriminator(real_input)
             loss_D_real = criterion(real_pred, True)
-            # Train with fake MRI images
-            fake_images = generator(low_res_images)
-            fake_pred = discriminator(fake_images.detach())
+
+            fake_pred = discriminator(fake_input)
             loss_D_fake = criterion(fake_pred, False)
+
             loss_D = (loss_D_real + loss_D_fake) / 2
             loss_D.backward()
             opt_D.step()
@@ -121,61 +97,60 @@ def main(rank, world_size):
             # Update generator
             # =================
             generator.zero_grad()
-            fake_pred = discriminator(fake_images)
-            loss_G = criterion(fake_pred, True)
+
+            # We calculate the loss based on the generator's fake output.
+            fake_input_G = torch.cat((fake_images, high_res_images), dim=1)
+            fake_pred_G = discriminator(fake_input_G)
+            loss_G = criterion(fake_pred_G, True)
+
             loss_G.backward()
             opt_G.step()
 
             # Calculate and record metrics
-            pred = generator(low_res_images)
-            epoch_metrics.dices.append(calculate_dice(pred, high_res_images))
-            epoch_metrics.ious.append(calculate_iou(pred, high_res_images))
+            epoch_metrics.dices.append(calculate_dice(fake_images, high_res_images))
+            epoch_metrics.ious.append(calculate_iou(fake_images, high_res_images))
+
             sensitivity, specificity = calculate_sensitivity_specificity(
-                pred, high_res_images
+                fake_images, high_res_images
             )
             epoch_metrics.sensitivities.append(sensitivity)
             epoch_metrics.specificities.append(specificity)
 
             # Logging
             if (i + 1) % 20 == 0:
-                print
-                (
-                    f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
+                print(
+                    f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
+                    f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
                 )
 
-            # Validation loop
-            generator.eval()
-            discriminator.eval()
-            with torch.no_grad():
-                for i, data in enumerate(val_loader):
-                    high_res_images, low_res_images = data[1].to(device), data[0].to(
-                        device
-                    )
+        # Validation loop
+        generator.eval()
+        discriminator.eval()
+        with torch.no_grad():
+            for val_data in val_loader:
+                high_res_images, low_res_images = val_data[1].to(device), val_data[
+                    0
+                ].to(device)
 
-                    pred = generator(low_res_images)
-                    ssim_index, psnr_value = calculate_ssim_psnr(
-                        pred, high_res_images, data_range=1.0
-                    )
-                    epoch_metrics.ssims.append(ssim_index)
-                    epoch_metrics.psnrs.append(psnr_value)
+                pred = generator(low_res_images)
+                ssim_index, psnr_value = calculate_ssim_psnr(
+                    pred, high_res_images, data_range=1.0
+                )
+                epoch_metrics.ssims.append(ssim_index)
+                epoch_metrics.psnrs.append(psnr_value)
 
-            if rank == 0:
-                save_plots(metrics, "Dice Coefficient", epoch)
-                save_plots(metrics, "IOU", epoch)
+        # Save plots of metrics
+        save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
+        save_plots(epoch_metrics.ious, "IOU", epoch)
 
-            # Update learning rate
-            scheduler_G.step()
-            scheduler_D.step()
+        # Update learning rate
+        scheduler_G.step()
+        scheduler_D.step()
 
-    # Make sure only the master process saves the model
-    if rank == 0:
-        torch.save(generator.module.state_dict(), "generator.pth")
-        torch.save(discriminator.module.state_dict(), "discriminator.pth")
-
-    # Cleanup should be called after model saving
-    cleanup()
+    # Save models for later use
+    torch.save(generator.state_dict(), "generator.pth")
+    torch.save(discriminator.state_dict(), "discriminator.pth")
 
 
 if __name__ == "__main__":
-    world_size = torch.cuda.device_count()
-    torch.multiprocessing.spawn(main, args=(world_size,), nprocs=world_size)
+    main()

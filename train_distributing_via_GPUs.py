@@ -38,12 +38,22 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 
 
-def main():
+def cleanup():
+    dist.destroy_process_group()
+
+
+def setup(rank, world_size):
+    dist.init_process_group("nccl", rank=rank, world_size=world_size)
+    torch.cuda.set_device(rank)
+
+
+def main(rank, world_size):
+    setup(rank, world_size)
     device = setup_device()
 
     # Initialize the generator and discriminator
-    generator = CustomUNet().to(device)
-    discriminator = CustomResnet().to(device)
+    generator = DDP(generator, device_ids=[rank])
+    discriminator = DDP(discriminator, device_ids=[rank])
 
     # Initialize Metric Tracker
     metrics = MetricTracker()
@@ -66,11 +76,24 @@ def main():
     mri_dataset = MRIDataset(base_dir)
 
     train_dataset, val_dataset, _ = split_dataset(mri_dataset)
-    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
+    # train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
+    # val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
+
+    train_sampler = DistributedSampler(
+        train_dataset, num_replicas=world_size, rank=rank
+    )
+    train_loader = DataLoader(
+        train_dataset, batch_size=8, shuffle=False, sampler=train_sampler
+    )
+    val_sampler = DistributedSampler(val_dataset, num_replicas=world_size, rank=rank)
+    val_loader = DataLoader(
+        val_dataset, batch_size=5, shuffle=False, sampler=val_sampler
+    )
 
     num_epochs = 50
     for epoch in range(num_epochs):
+        train_sampler.set_epoch(epoch)
+
         # Reset or initialize metrics for the epoch
         epoch_metrics = MetricTracker()
 
@@ -136,18 +159,23 @@ def main():
                     epoch_metrics.ssims.append(ssim_index)
                     epoch_metrics.psnrs.append(psnr_value)
 
-            # Save plots of metrics
-            save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
-            save_plots(epoch_metrics.ious, "IOU", epoch)
+            if rank == 0:
+                save_plots(metrics, "Dice Coefficient", epoch)
+                save_plots(metrics, "IOU", epoch)
 
             # Update learning rate
             scheduler_G.step()
             scheduler_D.step()
 
-    # Save models for later use
-    torch.save(generator.state_dict(), "generator.pth")
-    torch.save(discriminator.state_dict(), "discriminator.pth")
+    # Make sure only the master process saves the model
+    if rank == 0:
+        torch.save(generator.module.state_dict(), "generator.pth")
+        torch.save(discriminator.module.state_dict(), "discriminator.pth")
+
+    # Cleanup should be called after model saving
+    cleanup()
 
 
 if __name__ == "__main__":
-    main()
+    world_size = torch.cuda.device_count()
+    torch.multiprocessing.spawn(main, args=(world_size,), nprocs=world_size)

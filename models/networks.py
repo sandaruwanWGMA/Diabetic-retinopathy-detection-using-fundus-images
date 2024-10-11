@@ -122,3 +122,17 @@ class CustomUpsamplingSlicesBlock(nn.Module):
         # Apply final convolution to adjust channels
         x = self.final_conv_layer(x)
         return x
+
+
+class CustomSigmoidBlock(nn.Module):
+    def __init__(self):
+        super(CustomSigmoidBlock, self).__init__()
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        # Apply the sigmoid function
+        x = self.sigmoid(x)
+        # Reduce to a single scalar by taking the mean
+        x = torch.mean(x)
+        x = (x >= 0.5).float()
+        return x
