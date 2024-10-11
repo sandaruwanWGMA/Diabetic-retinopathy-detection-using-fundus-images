@@ -149,6 +149,7 @@ def main():
         discriminator.eval()
         with torch.no_grad():
             for val_data in dataloader:
+                print("Checkpoint 02")
                 high_res_images, low_res_images = val_data[1], val_data[0]
 
                 pred = generator(low_res_images)
@@ -157,10 +158,14 @@ def main():
                 )
                 epoch_metrics.ssims.append(ssim_index)
                 epoch_metrics.psnrs.append(psnr_value)
+                print("Checkpoint 03")
 
+        print("Checkpoint 04")
         # Save plots of metrics
-        # save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
-        # save_plots(epoch_metrics.ious, "IOU", epoch)
+        save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
+        print("Checkpoint 05")
+        save_plots(epoch_metrics.ious, "IOU", epoch)
+        print("Checkpoint 06")
 
         # Update learning rate
         scheduler_G.step()
