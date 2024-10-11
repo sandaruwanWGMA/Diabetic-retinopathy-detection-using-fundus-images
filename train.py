@@ -48,7 +48,7 @@ def main():
     opt_D = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
 
     # Losses
-    criterion = GANLoss(gan_mode="lsgan").to(device)
+    criterion = GANLoss(gan_mode="lsgan")
 
     # Learning rate schedulers
     scheduler_G = get_scheduler(opt_G, {"lr_policy": "step", "lr_decay_iters": 10})
@@ -94,7 +94,10 @@ def main():
             # print("loss_D_real: ", loss_D_real)
 
             fake_pred = discriminator(fake_input)
-            loss_D_fake = criterion(torch.tensor(fake_pred), False)
+            print("Fake Pred: ", fake_pred.shape)
+            loss_D_fake = criterion(
+                torch.tensor(fake_pred), torch.zeros_like(fake_pred)
+            )
             # print("loss_D_fake: ", loss_D_fake)
 
             loss_D = (loss_D_real + loss_D_fake) / 2
