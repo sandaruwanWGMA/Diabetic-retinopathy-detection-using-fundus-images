@@ -33,10 +33,9 @@ def setup_device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-M = 0
-
-
 def main():
+    M = 0
+
     device = setup_device()
 
     # Initialize the generator and discriminator
