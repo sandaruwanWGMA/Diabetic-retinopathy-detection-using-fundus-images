@@ -72,6 +72,8 @@ def main():
         # Reset or initialize metrics for the epoch
         epoch_metrics = MetricTracker()
         training_loss_accum = 0
+        dice = 0
+        iou = 0
 
         for i, data in enumerate(train_loader, 0):
             high_res_images = data[1]
@@ -124,8 +126,8 @@ def main():
             opt_G.step()
 
             # Calculate and record metrics
-            epoch_metrics.dices.append(calculate_dice(fake_images, high_res_images))
-            epoch_metrics.ious.append(calculate_iou(fake_images, high_res_images))
+            dice += calculate_dice(fake_images, high_res_images)
+            iou += calculate_iou(fake_images, high_res_images)
 
             sensitivity, specificity = calculate_sensitivity_specificity(
                 fake_images, high_res_images
@@ -149,6 +151,8 @@ def main():
             training_loss_accum += loss_G.item()
 
         train_loss.append(training_loss_accum / len(train_loader))
+        epoch_metrics.dices.append(dice / len(train_loader))
+        epoch_metrics.ious.append(iou / len(train_loader))
 
         # Validation loop
         generator.eval()
@@ -181,6 +185,7 @@ def main():
         scheduler_G.step()
         scheduler_D.step()
 
+    print("epoch_metrics.dices: ", epoch_metrics.dices)
     # Plotting and saving loss plots
     save_plots(epoch_metrics.dices, "Dice Coefficient", num_epochs=num_epochs)
     save_plots(epoch_metrics.ious, "IOU", num_epochs=num_epochs)
