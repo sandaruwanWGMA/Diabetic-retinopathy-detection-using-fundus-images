@@ -54,7 +54,7 @@ def main():
     scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
 
     # Define the path to the base directory containing both Low-Res and High-Res directories
-    base_dir = "/kaggle/input/high-res-and-low-res-without-resample/Not Resampled"
+    base_dir = "./MRI Dataset"
 
     # Create the dataset and dataloader
     mri_dataset = MRIDataset(base_dir)
