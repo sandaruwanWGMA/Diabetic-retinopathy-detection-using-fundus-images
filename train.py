@@ -123,8 +123,6 @@ def main():
             loss_G.backward()
             opt_G.step()
 
-            print("Generator checkpoint 01")
-
             # Calculate and record metrics
             epoch_metrics.dices.append(calculate_dice(fake_images, high_res_images))
             epoch_metrics.ious.append(calculate_iou(fake_images, high_res_images))
@@ -157,17 +155,17 @@ def main():
         discriminator.eval()
         with torch.no_grad():
             val_loss_accum = 0
+            ssim_index = 0
+            psnr_value = 0
             for val_data in val_loader:
-                print("Checkpoint 02")
                 high_res_images, low_res_images = val_data[1], val_data[0]
 
                 pred = generator(low_res_images)
-                ssim_index, psnr_value = calculate_ssim_psnr(
+                ssim_index_, psnr_value_ = calculate_ssim_psnr(
                     pred, high_res_images, data_range=1.0
                 )
-                epoch_metrics.ssims.append(ssim_index)
-                epoch_metrics.psnrs.append(psnr_value)
-                print("Checkpoint 03")
+                ssim_index += ssim_index_
+                psnr_value += psnr_value_
                 temp = discriminator(fake_input_G)
                 loss_G_val = criterion(
                     temp,
@@ -175,25 +173,17 @@ def main():
                 )
                 val_loss_accum += loss_G_val.item()
 
-            epoch_metrics.losses.append(val_loss_accum / len(val_loader))
             val_loss.append(val_loss_accum / len(val_loader))
-
-        print("Checkpoint 04")
-        # Save plots of metrics
-        print("epoch_metrics.dices: ", epoch_metrics.dices)
-        print("epoch_metrics.ious: ", epoch_metrics.ious)
-        save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
-        print("Checkpoint 05")
-        save_plots(epoch_metrics.ious, "IOU", epoch)
-        print("Checkpoint 06")
-
-        # Plotting and saving loss plots
-        print("Training losses: ", epoch_metrics.losses[:-1])
-        print("Validation losses: ", [epoch_metrics.losses[-1]])
+            epoch_metrics.ssims.append(ssim_index / len(val_loader))
+            epoch_metrics.psnrs.append(psnr_value / len(val_loader))
 
         # Update learning rate
         scheduler_G.step()
         scheduler_D.step()
+
+    # Plotting and saving loss plots
+    save_plots(epoch_metrics.dices, "Dice Coefficient", num_epochs=num_epochs)
+    save_plots(epoch_metrics.ious, "IOU", num_epochs=num_epochs)
 
     save_metrics_plot(
         train_loss,  # Training losses

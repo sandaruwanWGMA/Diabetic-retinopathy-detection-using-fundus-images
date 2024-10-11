@@ -3,32 +3,42 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def save_plots(metrics, title, epoch, folder="results"):
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+
+def save_plots(metrics, title, num_epochs, folder="results", step=2):
+    """
+    Saves a plot of given metrics over the epochs with customizable x-axis ticks.
+
+    Args:
+    metrics (list): A list of tensors containing the metric to be plotted.
+    title (str): The title for the plot and the y-axis.
+    num_epochs (int): The total number of epochs which will be used to determine x-axis labels.
+    folder (str): The folder where to save the plot.
+    step (int): The interval at which to place x-axis ticks.
+    """
     os.makedirs(folder, exist_ok=True)
     plt.figure()
 
     # Convert a list of tensors to a NumPy array
-    metrics_np = np.array(
-        [
-            metric.detach().numpy() if metric.requires_grad else metric.numpy()
-            for metric in metrics
-        ]
-    )
+    metrics_np = np.array([metric.item() for metric in metrics])
 
-    plt.plot(metrics_np)
+    # Generate epoch indices assuming metrics are collected at each epoch
+    epochs = np.arange(1, num_epochs + 1)
+
+    plt.plot(epochs, metrics_np, marker="o")  # Optional: Add marker for visibility
     plt.title(f"{title} Over Epochs")
     plt.xlabel("Epoch")
     plt.ylabel(title)
-    plt.savefig(os.path.join(folder, f"{title.lower()}_epoch_{epoch}.png"))
+
+    # Setting the ticks on the x-axis
+    plt.xticks(np.arange(1, num_epochs + 1, step))
+
+    # Save the plot
+    plt.savefig(os.path.join(folder, f"{title.lower().replace(' ', '_')}.png"))
     plt.close()
-
-
-import matplotlib.pyplot as plt
-
-
-import matplotlib.pyplot as plt
-import numpy as np
-import os
 
 
 def save_metrics_plot(
