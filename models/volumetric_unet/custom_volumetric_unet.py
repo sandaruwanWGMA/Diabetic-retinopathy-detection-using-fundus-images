@@ -49,7 +49,6 @@ class CustomUNet(nn.Module):
             param.requires_grad = False
 
     def forward(self, x):
-        print(f"Input shape: {x.shape}")
         # Pass through the ResidualUnit
         x = self.residual_unit(x)
         # Pass through the rest of the pre-trained UNet layers

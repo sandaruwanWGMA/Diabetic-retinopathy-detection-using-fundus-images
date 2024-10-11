@@ -60,8 +60,8 @@ def main():
     mri_dataset = MRIDataset(base_dir)
 
     train_dataset, val_dataset, _ = split_dataset(mri_dataset)
-    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
 
     num_epochs = 50
     for epoch in range(num_epochs):

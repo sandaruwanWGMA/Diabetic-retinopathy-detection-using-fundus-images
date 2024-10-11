@@ -8,6 +8,11 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from networks import CustomUpsamplingSlicesBlock
 
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
+from util.helpers.count_parameters import model_params
+
 
 class CustomResnet(nn.Module):
     def __init__(self):
