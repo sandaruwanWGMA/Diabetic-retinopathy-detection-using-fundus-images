@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 
 
 def save_metrics_plot(
-    train_metrics, val_metrics, title, xlabel, ylabel, folder="metrics_plots"
+    train_metrics, val_metrics, title, xlabel, ylabel, folder="results"
 ):
     """
     Saves a plot comparing training and validation metrics over epochs.
