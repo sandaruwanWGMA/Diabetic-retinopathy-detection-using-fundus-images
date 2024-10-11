@@ -68,7 +68,7 @@ def main():
     num_epochs = 20
     for epoch in range(num_epochs):
         # Reset or initialize metrics for the epoch
-        # epoch_metrics = MetricTracker()
+        epoch_metrics = MetricTracker()
 
         for i, data in enumerate(dataloader, 0):
             high_res_images = data[1]
@@ -87,49 +87,48 @@ def main():
             discriminator.zero_grad()
             print(f"epoch: {epoch}")
             # print("Real Input: ", real_input.shape)
-            random_tensor = torch.rand(1, 2, 150, 256, 256)
-            real_pred = discriminator(random_tensor)
+            real_pred = discriminator(real_input)
             # print("Real Pred: ", real_pred)
-            # loss_D_real = criterion(torch.tensor(real_pred), True)
+            loss_D_real = criterion(torch.tensor(real_pred), True)
             # print("loss_D_real: ", loss_D_real)
 
-            # fake_pred = discriminator(fake_input)
-            # loss_D_fake = criterion(torch.tensor(fake_pred), False)
+            fake_pred = discriminator(fake_input)
+            loss_D_fake = criterion(torch.tensor(fake_pred), False)
             # print("loss_D_fake: ", loss_D_fake)
 
-            # loss_D = (loss_D_real + loss_D_fake) / 2
-            # loss_D.backward()
-            # opt_D.step()
+            loss_D = (loss_D_real + loss_D_fake) / 2
+            loss_D.backward()
+            opt_D.step()
 
             # =================
             # Update generator
             # =================
-            # generator.zero_grad()
+            generator.zero_grad()
 
             # We calculate the loss based on the generator's fake output.
-            # fake_input_G = torch.cat((fake_images, high_res_images), dim=1)
-            # fake_pred_G = discriminator(fake_input_G)
-            # loss_G = criterion(fake_pred_G, True)
+            fake_input_G = torch.cat((fake_images, high_res_images), dim=1)
+            fake_pred_G = discriminator(fake_input_G)
+            loss_G = criterion(fake_pred_G, True)
 
-            # loss_G.backward()
-            # opt_G.step()
+            loss_G.backward()
+            opt_G.step()
 
             # Calculate and record metrics
-            # epoch_metrics.dices.append(calculate_dice(fake_images, high_res_images))
-            # epoch_metrics.ious.append(calculate_iou(fake_images, high_res_images))
+            epoch_metrics.dices.append(calculate_dice(fake_images, high_res_images))
+            epoch_metrics.ious.append(calculate_iou(fake_images, high_res_images))
 
-            # sensitivity, specificity = calculate_sensitivity_specificity(
-            #     fake_images, high_res_images
-            # )
-            # epoch_metrics.sensitivities.append(sensitivity)
-            # epoch_metrics.specificities.append(specificity)
+            sensitivity, specificity = calculate_sensitivity_specificity(
+                fake_images, high_res_images
+            )
+            epoch_metrics.sensitivities.append(sensitivity)
+            epoch_metrics.specificities.append(specificity)
 
             # Logging
-            # if (i + 1) % 20 == 0:
-            #     print(
-            #         f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
-            #         f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
-            #     )
+            if (i + 1) % 20 == 0:
+                print(
+                    f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
+                    f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
+                )
 
         # Validation loop
         # generator.eval()
@@ -147,15 +146,15 @@ def main():
         #         epoch_metrics.ssims.append(ssim_index)
         #         epoch_metrics.psnrs.append(psnr_value)
 
-    #     # Save plots of metrics
-    #     save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
-    #     save_plots(epoch_metrics.ious, "IOU", epoch)
+        # Save plots of metrics
+        save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
+        save_plots(epoch_metrics.ious, "IOU", epoch)
 
-    #     # Update learning rate
-    #     scheduler_G.step()
-    #     scheduler_D.step()
+        # Update learning rate
+        scheduler_G.step()
+        scheduler_D.step()
 
-    # # Save models for later use
+    # Save models for later use
     # torch.save(generator.state_dict(), "generator.pth")
     # torch.save(discriminator.state_dict(), "discriminator.pth")
 
