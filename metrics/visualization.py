@@ -1,18 +1,21 @@
 import os
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def save_plots(metrics, title, epoch, folder="results"):
     os.makedirs(folder, exist_ok=True)
     plt.figure()
 
-    # Ensure the tensor is detached and converted to a NumPy array
-    if metrics.requires_grad:
-        metrics = metrics.detach().numpy()
-    else:
-        metrics = metrics.numpy()
+    # Convert a list of tensors to a NumPy array
+    metrics_np = np.array(
+        [
+            metric.detach().numpy() if metric.requires_grad else metric.numpy()
+            for metric in metrics
+        ]
+    )
 
-    plt.plot(metrics)
+    plt.plot(metrics_np)
     plt.title(f"{title} Over Epochs")
     plt.xlabel("Epoch")
     plt.ylabel(title)
