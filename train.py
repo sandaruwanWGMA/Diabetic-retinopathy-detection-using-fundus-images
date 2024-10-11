@@ -161,8 +161,8 @@ def main():
                 epoch_metrics.psnrs.append(psnr_value)
 
         # Save plots of metrics
-        save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
-        save_plots(epoch_metrics.ious, "IOU", epoch)
+        # save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
+        # save_plots(epoch_metrics.ious, "IOU", epoch)
 
         # Update learning rate
         scheduler_G.step()
