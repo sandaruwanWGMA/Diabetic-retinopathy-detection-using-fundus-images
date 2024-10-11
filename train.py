@@ -85,16 +85,17 @@ def main():
             # ===================
             discriminator.zero_grad()
             real_pred = discriminator(real_input)
-            loss_D_real = criterion(torch.tensor(real_pred), True)
-            print("loss_D_real: ", loss_D_real)
+            print("Real Pred: ", real_pred)
+            # loss_D_real = criterion(torch.tensor(real_pred), True)
+            # print("loss_D_real: ", loss_D_real)
 
-            fake_pred = discriminator(fake_input)
-            loss_D_fake = criterion(torch.tensor(fake_pred), False)
-            print("loss_D_fake: ", loss_D_fake)
+            # fake_pred = discriminator(fake_input)
+            # loss_D_fake = criterion(torch.tensor(fake_pred), False)
+            # print("loss_D_fake: ", loss_D_fake)
 
-            loss_D = (loss_D_real + loss_D_fake) / 2
-            loss_D.backward()
-            opt_D.step()
+            # loss_D = (loss_D_real + loss_D_fake) / 2
+            # loss_D.backward()
+            # opt_D.step()
 
             # =================
             # Update generator
