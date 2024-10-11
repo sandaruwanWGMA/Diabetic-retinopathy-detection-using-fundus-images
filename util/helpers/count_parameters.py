@@ -1,4 +1,10 @@
-def count_parameters(model):
+def model_params(model):
     total_params = sum(p.numel() for p in model.parameters())
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    return total_params, trainable_params
+    non_trainable_params = total_params - trainable_params
+
+    return {
+        "Trainable Parameters": trainable_params,
+        "Non-trainable Parameters": non_trainable_params,
+        "Total Parameters": total_params,
+    }

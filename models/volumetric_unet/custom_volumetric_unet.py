@@ -1,48 +1,3 @@
-# import torch
-# import torch.nn as nn
-# from monai.networks.nets import UNet
-
-
-# class UNetWithPrint(UNet):
-#     def forward(self, x):
-#         print(f"Input shape: {x.shape}")
-#         for name, layer in self.model.named_children():
-#             print(f"{name} input shape: {x.shape}")
-#             x = layer(x)
-#             print(f"{name} output shape: {x.shape}")
-#         return x
-
-
-# # Define the UNet model
-# unet_model = UNet(
-#     spatial_dims=3,
-#     in_channels=1,
-#     out_channels=1,
-#     channels=(16, 32, 64, 128, 256),
-#     strides=(2, 2, 2, 2),
-#     num_res_units=2,
-#     norm="batch",
-# )
-
-# # Creating a dummy input tensor of shape [1, 1, 128, 128, 128]
-# input_tensor = torch.randn(1, 1, 256, 256, 256)
-
-# model = UNetWithPrint(
-#     spatial_dims=3,
-#     in_channels=1,
-#     out_channels=1,
-#     channels=(16, 32, 64, 128, 256),
-#     strides=(2, 2, 2, 2),
-#     num_res_units=2,
-#     norm="batch",
-# )
-
-# # Forward pass through the model
-# output = model(input_tensor)
-
-# print(output.shape)
-
-
 import torch
 import torch.nn as nn
 from monai.networks.nets import UNet
@@ -52,6 +7,11 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from networks import CustomResidualInput, DepthUpsampleNet
+
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
+from util.helpers.count_parameters import model_params
 
 
 class UNetWithoutFirstLayer(UNet):
@@ -64,9 +24,9 @@ class UNetWithoutFirstLayer(UNet):
 
 
 # Custom UNet class with the ResidualUnit replacing the default input layer
-class CustomUNetWithResidual(nn.Module):
+class CustomUNet(nn.Module):
     def __init__(self):
-        super(CustomUNetWithResidual, self).__init__()
+        super(CustomUNet, self).__init__()
 
         # Add the custom ResidualUnit as the new input layer
         self.residual_unit = CustomResidualInput(in_channels=1, out_channels=16)
@@ -84,6 +44,10 @@ class CustomUNetWithResidual(nn.Module):
 
         self.depthUpSamplingNet = DepthUpsampleNet()
 
+        # Freeze all layers in UNet model
+        for param in self.unet.parameters():
+            param.requires_grad = False
+
     def forward(self, x):
         print(f"Input shape: {x.shape}")
         # Pass through the ResidualUnit
@@ -97,11 +61,7 @@ class CustomUNetWithResidual(nn.Module):
 
 
 # Instantiate the custom model
-model = CustomUNetWithResidual()
+model = CustomUNet()
+print(model)
 
-input_tensor = torch.randn(1, 1, 30, 256, 256)
-
-# Forward pass through the modified model
-output = model(input_tensor)
-
-print(f"Final output shape: {output.shape}")
+print(model_params(model))
