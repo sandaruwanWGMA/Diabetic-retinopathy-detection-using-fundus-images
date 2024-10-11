@@ -162,6 +162,8 @@ def main():
 
         print("Checkpoint 04")
         # Save plots of metrics
+        print("epoch_metrics.dices: ", epoch_metrics.dices)
+        print("epoch_metrics.ious: ", epoch_metrics.ious)
         save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
         print("Checkpoint 05")
         save_plots(epoch_metrics.ious, "IOU", epoch)
