@@ -85,23 +85,23 @@ def main():
             # Update discriminator
             # ===================
             discriminator.zero_grad()
-            print(f"epoch: {epoch}")
+            # print(f"epoch: {epoch}")
             # print("Real Input: ", real_input.shape)
             real_pred = discriminator(real_input)
             # print("Real Pred: ", real_pred)
-            print("Real Pred Shape: ", real_pred.shape)
-            print("Real Pred: ", real_pred)
+            # print("Real Pred Shape: ", real_pred.shape)
+            # print("Real Pred: ", real_pred)
             loss_D_real = criterion(real_pred, torch.ones_like(real_pred))
-            print("loss_D_real: ", loss_D_real)
+            # print("loss_D_real: ", loss_D_real)
             # print("loss_D_real: ", loss_D_real)
 
             fake_pred = discriminator(fake_input)
-            print("Fake Pred Shape: ", fake_pred.shape)
-            print("Fake Pred: ", fake_pred)
+            # print("Fake Pred Shape: ", fake_pred.shape)
+            # print("Fake Pred: ", fake_pred)
             loss_D_fake = criterion(
                 torch.tensor(fake_pred), torch.zeros_like(fake_pred)
             )
-            print("loss_D_fake: ", loss_D_fake)
+            # print("loss_D_fake: ", loss_D_fake)
 
             loss_D = (loss_D_real + loss_D_fake) / 2
             loss_D.backward()
@@ -123,21 +123,21 @@ def main():
             print("Generator checkpoint 01")
 
             # Calculate and record metrics
-            # epoch_metrics.dices.append(calculate_dice(fake_images, high_res_images))
-            # epoch_metrics.ious.append(calculate_iou(fake_images, high_res_images))
+            epoch_metrics.dices.append(calculate_dice(fake_images, high_res_images))
+            epoch_metrics.ious.append(calculate_iou(fake_images, high_res_images))
 
-            # sensitivity, specificity = calculate_sensitivity_specificity(
-            #     fake_images, high_res_images
-            # )
-            # epoch_metrics.sensitivities.append(sensitivity)
-            # epoch_metrics.specificities.append(specificity)
+            sensitivity, specificity = calculate_sensitivity_specificity(
+                fake_images, high_res_images
+            )
+            epoch_metrics.sensitivities.append(sensitivity)
+            epoch_metrics.specificities.append(specificity)
 
             # Logging
-            # if (i + 1) % 20 == 0:
-            #     print(
-            #         f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
-            #         f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
-            #     )
+            if (i + 1) % 20 == 0:
+                print(
+                    f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
+                    f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
+                )
 
         # Validation loop
         # generator.eval()
