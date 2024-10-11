@@ -65,7 +65,7 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
 
-    num_epochs = 3
+    num_epochs = 50
     train_loss = []
     val_loss = []
     epoch_metrics_dices = []
@@ -140,7 +140,7 @@ def main():
             epoch_metrics.specificities.append(specificity)
 
             # Logging
-            if (i + 1) % 20 == 0:
+            if (i + 1) % 2 == 0:
                 print(
                     f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
                     f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
