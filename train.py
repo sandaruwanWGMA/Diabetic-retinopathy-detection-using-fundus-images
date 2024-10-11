@@ -189,7 +189,6 @@ def main():
         scheduler_G.step()
         scheduler_D.step()
 
-    print("epoch_metrics.dices: ", epoch_metrics.dices)
     # Plotting and saving loss plots
     save_plots(epoch_metrics_dices, "Dice Coefficient", num_epochs=num_epochs)
     save_plots(epoch_metrics_ious, "IOU", num_epochs=num_epochs)
