@@ -22,7 +22,7 @@ from metrics.metrics import (
 )
 
 from metrics.save_image_triplets import save_image_triplets
-from metrics.visualization import save_plots, save_loss_plot
+from metrics.visualization import save_plots, save_metrics_plot
 
 # Import Custom Dataset
 from data.dataloader import MRIDataset
@@ -183,7 +183,7 @@ def main():
         # Plotting and saving loss plots
         print("Training losses: ", epoch_metrics.losses[:-1])
         print("Validation losses: ", [epoch_metrics.losses[-1]])
-        save_loss_plot(
+        save_metrics_plot(
             epoch_metrics.losses[:-1],  # Training losses
             [epoch_metrics.losses[-1]],  # Validation loss for the epoch
             "Loss",
