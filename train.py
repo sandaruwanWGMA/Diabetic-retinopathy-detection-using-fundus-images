@@ -58,6 +58,7 @@ def main():
 
     # Create the dataset and dataloader
     mri_dataset = MRIDataset(base_dir)
+    dataloader = DataLoader(mri_dataset, batch_size=1, shuffle=True)  # TEMPORARY
 
     train_dataset, val_dataset, _ = split_dataset(mri_dataset)
     train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
@@ -68,7 +69,7 @@ def main():
         # Reset or initialize metrics for the epoch
         epoch_metrics = MetricTracker()
 
-        for i, data in enumerate(train_loader, 0):
+        for i, data in enumerate(dataloader, 0):
             high_res_images = data[1].to(device)
             low_res_images = data[0].to(device)
 
@@ -124,20 +125,20 @@ def main():
                 )
 
         # Validation loop
-        generator.eval()
-        discriminator.eval()
-        with torch.no_grad():
-            for val_data in val_loader:
-                high_res_images, low_res_images = val_data[1].to(device), val_data[
-                    0
-                ].to(device)
+        # generator.eval()
+        # discriminator.eval()
+        # with torch.no_grad():
+        #     for val_data in val_loader:
+        #         high_res_images, low_res_images = val_data[1].to(device), val_data[
+        #             0
+        #         ].to(device)
 
-                pred = generator(low_res_images)
-                ssim_index, psnr_value = calculate_ssim_psnr(
-                    pred, high_res_images, data_range=1.0
-                )
-                epoch_metrics.ssims.append(ssim_index)
-                epoch_metrics.psnrs.append(psnr_value)
+        #         pred = generator(low_res_images)
+        #         ssim_index, psnr_value = calculate_ssim_psnr(
+        #             pred, high_res_images, data_range=1.0
+        #         )
+        #         epoch_metrics.ssims.append(ssim_index)
+        #         epoch_metrics.psnrs.append(psnr_value)
 
         # Save plots of metrics
         save_plots(epoch_metrics.dices, "Dice Coefficient", epoch)
