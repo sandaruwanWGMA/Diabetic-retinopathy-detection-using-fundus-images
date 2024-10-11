@@ -71,15 +71,15 @@ def main():
         # epoch_metrics = MetricTracker()
 
         for i, data in enumerate(dataloader, 0):
-            high_res_images = data[1].to(device)
-            low_res_images = data[0].to(device)
+            high_res_images = data[1]
+            low_res_images = data[0]
 
             # Generate fake images from low-res images
-            # fake_images = generator(low_res_images)
+            fake_images = generator(low_res_images)
 
             # Prepare data for the discriminator
-            # real_input = torch.cat((high_res_images, high_res_images), dim=1)
-            # fake_input = torch.cat((fake_images.detach(), high_res_images), dim=1)
+            real_input = torch.cat((high_res_images, high_res_images), dim=1)
+            fake_input = torch.cat((fake_images.detach(), high_res_images), dim=1)
 
             # ===================
             # Update discriminator
