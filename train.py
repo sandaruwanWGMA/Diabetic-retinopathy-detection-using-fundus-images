@@ -80,14 +80,13 @@ def main():
             real_input = torch.cat((high_res_images, high_res_images), dim=1)
             fake_input = torch.cat((fake_images.detach(), high_res_images), dim=1)
 
-            print("shape of real input: ", real_input.shape)
-
             # ===================
             # Update discriminator
             # ===================
-            # discriminator.zero_grad()
-            # real_pred = discriminator(real_input)
-            # loss_D_real = criterion(real_pred, True)
+            discriminator.zero_grad()
+            real_pred = discriminator(real_input)
+            loss_D_real = criterion(real_pred, True)
+            print("loss_D_real: ", loss_D_real)
 
             # fake_pred = discriminator(fake_input)
             # loss_D_fake = criterion(fake_pred, False)

@@ -32,8 +32,6 @@ class CustomResidualInput(nn.Module):
         # Apply the 3D transposed convolution layer
         x = self.align_depth_transposed_conv3d_layer(x)
 
-        print("Output of Custom Input: ", x.shape)
-
         return x
 
 
