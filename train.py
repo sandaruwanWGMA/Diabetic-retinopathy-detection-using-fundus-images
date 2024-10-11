@@ -84,8 +84,9 @@ def main():
             # Update discriminator
             # ===================
             discriminator.zero_grad()
-            print("Done")
-            # real_pred = discriminator(real_input)
+            print(f"epoch: {epoch}")
+            print("Real Input: ", real_input.shape)
+            real_pred = discriminator(real_input)
             # print("Real Pred: ", real_pred)
             # loss_D_real = criterion(torch.tensor(real_pred), True)
             # print("loss_D_real: ", loss_D_real)
