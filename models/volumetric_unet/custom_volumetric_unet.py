@@ -58,10 +58,3 @@ class CustomUNet(nn.Module):
         x = self.depthUpSamplingNet(x)
 
         return x
-
-
-# Instantiate the custom model
-model = CustomUNet()
-print(model)
-
-print(model_params(model))

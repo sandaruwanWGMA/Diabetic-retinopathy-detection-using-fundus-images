@@ -15,6 +15,10 @@ class CustomResnet(nn.Module):
         # Load the pretrained R3D model
         model = r3d_18(weights=R3D_18_Weights.KINETICS400_V1)
 
+        # Freeze all parameters in the model
+        for param in model.parameters():
+            param.requires_grad = False
+
         # Modify the first convolutional layer to accept 1 input channel
         old_conv = model.stem[0]
         self.first_conv = nn.Conv3d(
@@ -39,14 +43,3 @@ class CustomResnet(nn.Module):
         x = self.features(x)
         x = self.custom_upsampling_slices_block(x)
         return x
-
-
-# Create an instance of the customized model
-custom_resnet = CustomResnet()
-
-# Create a single-channel input tensor
-input_tensor = torch.rand(1, 1, 150, 256, 256)
-
-# Forward pass through the model
-output = custom_resnet(input_tensor)
-print("Output shape: ", output.shape)
