@@ -21,3 +21,35 @@ def save_plots(metrics, title, epoch, folder="results"):
     plt.ylabel(title)
     plt.savefig(os.path.join(folder, f"{title.lower()}_epoch_{epoch}.png"))
     plt.close()
+
+
+import matplotlib.pyplot as plt
+
+
+def save_loss_plot(
+    train_metrics, val_metrics, title, xlabel, ylabel, epoch, folder="results"
+):
+    """
+    Saves a plot comparing training and validation metrics over epochs.
+
+    Args:
+    train_metrics (list): A list of metric values from training data.
+    val_metrics (list): A list of metric values from validation data.
+    title (str): The title of the plot.
+    xlabel (str): The label for the x-axis.
+    ylabel (str): The label for the y-axis.
+    epoch (int): The current epoch, used for naming the file.
+    folder (str, optional): The directory to save the plot. Defaults to 'metrics_plots'.
+    """
+    os.makedirs(folder, exist_ok=True)
+    plt.figure()
+    plt.plot(train_metrics, label="Train")
+    plt.plot(val_metrics, label="Validation")
+    plt.title(f"{title} Over Epochs")
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.legend()
+    plt.savefig(
+        os.path.join(folder, f"{title.lower().replace(' ', '_')}_epoch_{epoch}.png")
+    )
+    plt.close()

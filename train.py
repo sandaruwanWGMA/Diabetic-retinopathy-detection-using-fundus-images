@@ -22,7 +22,7 @@ from metrics.metrics import (
 )
 
 from metrics.save_image_triplets import save_image_triplets
-from metrics.visualization import save_plots
+from metrics.visualization import save_plots, save_loss_plot
 
 # Import Custom Dataset
 from data.dataloader import MRIDataset
@@ -59,18 +59,18 @@ def main():
 
     # Create the dataset and dataloader
     mri_dataset = MRIDataset(base_dir)
-    dataloader = DataLoader(mri_dataset, batch_size=1, shuffle=True)  # TEMPORARY
+    # dataloader = DataLoader(mri_dataset, batch_size=1, shuffle=True)  # TEMPORARY
 
-    # train_dataset, val_dataset, _ = split_dataset(mri_dataset)
-    # train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-    # val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
+    train_dataset, val_dataset, _ = split_dataset(mri_dataset)
+    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
 
     num_epochs = 1
     for epoch in range(num_epochs):
         # Reset or initialize metrics for the epoch
         epoch_metrics = MetricTracker()
 
-        for i, data in enumerate(dataloader, 0):
+        for i, data in enumerate(train_loader, 0):
             high_res_images = data[1]
             low_res_images = data[0]
 
@@ -140,15 +140,17 @@ def main():
             #     )
 
             print(
-                f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(dataloader)}], "
+                f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
                 f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
             )
+
+            epoch_metrics.losses.append((loss_G.item() + loss_D.item()) / 2)
 
         # Validation loop
         generator.eval()
         discriminator.eval()
         with torch.no_grad():
-            for val_data in dataloader:
+            for val_data in val_loader:
                 print("Checkpoint 02")
                 high_res_images, low_res_images = val_data[1], val_data[0]
 
@@ -159,6 +161,13 @@ def main():
                 epoch_metrics.ssims.append(ssim_index)
                 epoch_metrics.psnrs.append(psnr_value)
                 print("Checkpoint 03")
+                loss_G_val = criterion(
+                    discriminator(fake_input_G),
+                    torch.ones_like(discriminator(fake_input_G)),
+                )
+                val_loss_accum += loss_G_val.item()
+
+            epoch_metrics.losses.append(val_loss_accum / len(val_loader))
 
         print("Checkpoint 04")
         # Save plots of metrics
@@ -168,6 +177,16 @@ def main():
         print("Checkpoint 05")
         save_plots(epoch_metrics.ious, "IOU", epoch)
         print("Checkpoint 06")
+
+        # Plotting and saving loss plots
+        save_loss_plot(
+            epoch_metrics.losses[:-1],  # Training losses
+            [epoch_metrics.losses[-1]],  # Validation loss for the epoch
+            "Loss",
+            "Epoch",
+            "Loss",
+            epoch,
+        )
 
         # Update learning rate
         scheduler_G.step()
