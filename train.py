@@ -189,6 +189,8 @@ def main():
     # Plotting and saving loss plots
     save_plots(epoch_metrics.dices, "Dice Coefficient", num_epochs=num_epochs)
     save_plots(epoch_metrics.ious, "IOU", num_epochs=num_epochs)
+    save_plots(epoch_metrics.ssims, "SSIM", num_epochs=num_epochs)
+    save_plots(epoch_metrics.psnrs, "PSNRS", num_epochs=num_epochs)
 
     save_metrics_plot(
         train_loss,  # Training losses
