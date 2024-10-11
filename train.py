@@ -161,6 +161,9 @@ def main():
 
 
 if __name__ == "__main__":
-    # Set the environment variable
-    os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments"
-    main()
+    try:
+        # Set the environment variable
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "max_split_size_mb:50"
+        main()
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
