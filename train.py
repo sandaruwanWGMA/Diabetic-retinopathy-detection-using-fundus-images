@@ -149,9 +149,7 @@ def main():
         discriminator.eval()
         with torch.no_grad():
             for val_data in dataloader:
-                high_res_images, low_res_images = val_data[1].to(device), val_data[
-                    0
-                ].to(device)
+                high_res_images, low_res_images = val_data[1], val_data[0]
 
                 pred = generator(low_res_images)
                 ssim_index, psnr_value = calculate_ssim_psnr(

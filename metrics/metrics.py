@@ -55,13 +55,33 @@ def calculate_sensitivity_specificity(pred, true):
     return sensitivity.item(), specificity.item()
 
 
+def mse_loss(pred, true):
+    return ((pred - true) ** 2).mean()
+
+
 def calculate_ssim_psnr(pred, true, data_range):
-    pred = pred.detach().cpu().numpy()
-    true = true.detach().cpu().numpy()
-    ssim_index = ssim(pred, true, data_range=data_range)
-    mse = mse_loss(torch.tensor(pred), torch.tensor(true), reduction="mean")
-    psnr_value = 20 * torch.log10(torch.tensor(data_range) / torch.sqrt(mse))
-    return ssim_index, psnr_value.item()
+    # Assuming pred and true are PyTorch tensors in the shape [1, 1, 150, 256, 256]
+    ssim_total = 0.0
+    psnr_total = 0.0
+    num_images = pred.size(2)
+
+    for i in range(num_images):
+        pred_i = pred[0, 0, i].detach().cpu().numpy()
+        true_i = true[0, 0, i].detach().cpu().numpy()
+
+        ssim_total += ssim(pred_i, true_i, data_range=data_range)
+
+        mse = mse_loss(
+            torch.tensor(pred_i, dtype=torch.float32),
+            torch.tensor(true_i, dtype=torch.float32),
+        )
+        psnr_total += 20 * torch.log10(torch.tensor(data_range) / torch.sqrt(mse))
+
+    # Average the SSIM and PSNR values over all images
+    avg_ssim = ssim_total / num_images
+    avg_psnr = psnr_total / num_images
+
+    return avg_ssim, avg_psnr.item()
 
 
 def calculate_dice(pred, true):
