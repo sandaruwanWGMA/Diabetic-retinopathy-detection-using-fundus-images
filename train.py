@@ -34,8 +34,6 @@ def setup_device():
 
 
 def main():
-    M = 0
-
     device = setup_device()
 
     # Initialize the generator and discriminator
@@ -70,6 +68,10 @@ def main():
     num_epochs = 3
     train_loss = []
     val_loss = []
+    epoch_metrics_dices = []
+    epoch_metrics_ious = []
+    epoch_metrics_ssims = []
+    epoch_metrics_psnrs = []
     for epoch in range(num_epochs):
         # Reset or initialize metrics for the epoch
         epoch_metrics = MetricTracker()
@@ -153,9 +155,8 @@ def main():
             training_loss_accum += loss_G.item()
 
         train_loss.append(training_loss_accum / len(train_loader))
-        M += 1
-        epoch_metrics.dices.append(dice / len(train_loader))
-        epoch_metrics.ious.append(iou / len(train_loader))
+        epoch_metrics_dices.append(dice / len(train_loader))
+        epoch_metrics_ious.append(iou / len(train_loader))
 
         # Validation loop
         generator.eval()
@@ -181,20 +182,19 @@ def main():
                 val_loss_accum += loss_G_val.item()
 
             val_loss.append(val_loss_accum / len(val_loader))
-            epoch_metrics.ssims.append(ssim_index / len(val_loader))
-            epoch_metrics.psnrs.append(psnr_value / len(val_loader))
+            epoch_metrics_ssims.append(ssim_index / len(val_loader))
+            epoch_metrics_psnrs.append(psnr_value / len(val_loader))
 
         # Update learning rate
         scheduler_G.step()
         scheduler_D.step()
 
-    print("M: ", M)
     print("epoch_metrics.dices: ", epoch_metrics.dices)
     # Plotting and saving loss plots
-    save_plots(epoch_metrics.dices, "Dice Coefficient", num_epochs=num_epochs)
-    save_plots(epoch_metrics.ious, "IOU", num_epochs=num_epochs)
-    save_plots(epoch_metrics.ssims, "SSIM", num_epochs=num_epochs)
-    save_plots(epoch_metrics.psnrs, "PSNRS", num_epochs=num_epochs)
+    save_plots(epoch_metrics_dices, "Dice Coefficient", num_epochs=num_epochs)
+    save_plots(epoch_metrics_ious, "IOU", num_epochs=num_epochs)
+    save_plots(epoch_metrics_ssims, "SSIM", num_epochs=num_epochs)
+    save_plots(epoch_metrics_psnrs, "PSNRS", num_epochs=num_epochs)
 
     save_metrics_plot(
         train_loss,  # Training losses
