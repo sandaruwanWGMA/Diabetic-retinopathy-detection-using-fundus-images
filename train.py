@@ -86,7 +86,7 @@ def main():
             discriminator.zero_grad()
             print(f"epoch: {epoch}")
             print("Real Input: ", real_input.shape)
-            random_tensor = torch.rand(1, 2, 150, 256, 256)
+            random_tensor = torch.rand(1, 2, 150, 256, 256, device=device)
             real_pred = discriminator(random_tensor)
             # print("Real Pred: ", real_pred)
             # loss_D_real = criterion(torch.tensor(real_pred), True)
