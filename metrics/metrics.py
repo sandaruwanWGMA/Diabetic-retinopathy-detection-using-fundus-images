@@ -8,18 +8,18 @@ from dataclasses import dataclass, field
 class MetricTracker:
     train_losses: list = field(default_factory=list)
     val_losses: list = field(default_factory=list)
-    losses: list = None
-    accuracies: list = None
-    precisions: list = None
-    recalls: list = None
-    f1_scores: list = None
-    dices: list = None
-    ious: list = None
-    sensitivities: list = None
-    specificities: list = None
-    ssims: list = None
-    psnrs: list = None
-    aucs: list = None
+    losses: list = field(default_factory=list)
+    accuracies: list = field(default_factory=list)
+    precisions: list = field(default_factory=list)
+    recalls: list = field(default_factory=list)
+    f1_scores: list = field(default_factory=list)
+    dices: list = field(default_factory=list)
+    ious: list = field(default_factory=list)
+    sensitivities: list = field(default_factory=list)
+    specificities: list = field(default_factory=list)
+    ssims: list = field(default_factory=list)
+    psnrs: list = field(default_factory=list)
+    aucs: list = field(default_factory=list)
 
     def __post_init__(self):
         self.losses = []

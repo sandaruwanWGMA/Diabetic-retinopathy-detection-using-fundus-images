@@ -33,6 +33,9 @@ def setup_device():
     return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
+M = 0
+
+
 def main():
     device = setup_device()
 
@@ -151,6 +154,7 @@ def main():
             training_loss_accum += loss_G.item()
 
         train_loss.append(training_loss_accum / len(train_loader))
+        M += 1
         epoch_metrics.dices.append(dice / len(train_loader))
         epoch_metrics.ious.append(iou / len(train_loader))
 
@@ -185,6 +189,7 @@ def main():
         scheduler_G.step()
         scheduler_D.step()
 
+    print("M: ", M)
     print("epoch_metrics.dices: ", epoch_metrics.dices)
     # Plotting and saving loss plots
     save_plots(epoch_metrics.dices, "Dice Coefficient", num_epochs=num_epochs)
