@@ -1,11 +1,13 @@
 import torch
 from torch.nn.functional import mse_loss
 from skimage.metrics import structural_similarity as ssim
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
 class MetricTracker:
+    train_losses: list = field(default_factory=list)
+    val_losses: list = field(default_factory=list)
     losses: list = None
     accuracies: list = None
     precisions: list = None

@@ -190,6 +190,7 @@ def main():
             "Epoch",
             "Loss",
             epoch,
+            folder="results",
         )
 
         # Update learning rate
