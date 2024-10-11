@@ -135,7 +135,7 @@ def main():
             # Logging
             if (i + 1) % 20 == 0:
                 print(
-                    f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
+                    f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(dataloader)}], "
                     f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
                 )
 
