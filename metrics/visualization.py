@@ -26,30 +26,28 @@ def save_plots(metrics, title, epoch, folder="results"):
 import matplotlib.pyplot as plt
 
 
-def save_loss_plot(
-    train_metrics, val_metrics, title, xlabel, ylabel, epoch, folder="results"
+def save_metrics_plot(
+    train_metrics, val_metrics, title, xlabel, ylabel, folder="metrics_plots"
 ):
     """
     Saves a plot comparing training and validation metrics over epochs.
-
-    Args:
-    train_metrics (list): A list of metric values from training data.
-    val_metrics (list): A list of metric values from validation data.
-    title (str): The title of the plot.
-    xlabel (str): The label for the x-axis.
-    ylabel (str): The label for the y-axis.
-    epoch (int): The current epoch, used for naming the file.
-    folder (str, optional): The directory to save the plot. Defaults to 'metrics_plots'.
+    Handles a single epoch case by using scatter plot if not enough data for line plot.
     """
     os.makedirs(folder, exist_ok=True)
     plt.figure()
-    plt.plot(train_metrics, label="Train")
-    plt.plot(val_metrics, label="Validation")
-    plt.title(f"{title} Over Epochs")
+    epochs = range(len(train_metrics))
+
+    if len(train_metrics) > 1:
+        plt.plot(epochs, train_metrics, label="Train")
+        plt.plot(epochs, val_metrics, label="Validation")
+    else:
+        plt.scatter(epochs, train_metrics, label="Train")
+        plt.scatter(epochs, val_metrics, label="Validation")
+
+    plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
+    plt.xticks(epochs)  # Ensure that each epoch is marked clearly
     plt.legend()
-    plt.savefig(
-        os.path.join(folder, f"{title.lower().replace(' ', '_')}_epoch_{epoch}.png")
-    )
+    plt.savefig(os.path.join(folder, f"{title.lower().replace(' ', '_')}.png"))
     plt.close()

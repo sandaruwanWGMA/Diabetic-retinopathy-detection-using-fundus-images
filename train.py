@@ -181,6 +181,8 @@ def main():
         print("Checkpoint 06")
 
         # Plotting and saving loss plots
+        print("Training losses: ", epoch_metrics.losses[:-1])
+        print("Validation losses: ", [epoch_metrics.losses[-1]])
         save_loss_plot(
             epoch_metrics.losses[:-1],  # Training losses
             [epoch_metrics.losses[-1]],  # Validation loss for the epoch
