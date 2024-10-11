@@ -132,5 +132,4 @@ class CustomSigmoidBlock(nn.Module):
         x = self.sigmoid(x)
         # Reduce to a single scalar by taking the mean
         x = torch.mean(x)
-        x = (x >= 0.5).float()
         return x
