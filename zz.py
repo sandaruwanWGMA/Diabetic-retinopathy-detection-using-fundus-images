@@ -55,12 +55,35 @@ def main():
     scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
 
     # Define the path to the base directory containing both Low-Res and High-Res directories
-    base_dir = "/kaggle/input/high-res-and-low-res-without-resample/Not Resampled"
+    base_dir = "./MRI Dataset"
 
     # Create the dataset and dataloader
     mri_dataset = MRIDataset(base_dir)
     # dataloader = DataLoader(mri_dataset, batch_size=1, shuffle=True)  # TEMPORARY
 
     train_dataset, val_dataset, _ = split_dataset(mri_dataset)
-    train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
+
+    for i, data in enumerate(train_loader, 0):
+        high_res_images = data[1]
+        low_res_images = data[0]
+        print(high_res_images)
+
+    # for i, data in enumerate(val_loader, 0):
+    #     high_res_images2 = data[1]
+    #     low_res_images2 = data[0]
+    #     print(low_res_images2)
+
+    for val_data in val_loader:
+        high_res_images2, low_res_images2 = val_data[1], val_data[0]
+        print(low_res_images2)
+
+
+if __name__ == "__main__":
+    try:
+        # Set the environment variable
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+        main()
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
