@@ -88,8 +88,6 @@ def main():
             real_input = torch.cat((high_res_images, high_res_images), dim=1)
             fake_input = torch.cat((fake_images.detach(), high_res_images), dim=1)
 
-            print("Checkpoint 1")
-
             # ===================
             # Update discriminator
             # ===================
@@ -100,7 +98,6 @@ def main():
             # print("Real Pred: ", real_pred)
             # print("Real Pred Shape: ", real_pred.shape)
             # print("Real Pred: ", real_pred)
-            print("Checkpoint 2")
             loss_D_real = criterion(real_pred, torch.ones_like(real_pred))
             # print("loss_D_real: ", loss_D_real)
             # print("loss_D_real: ", loss_D_real)
@@ -116,7 +113,6 @@ def main():
             loss_D = (loss_D_real + loss_D_fake) / 2
             loss_D.backward()
             opt_D.step()
-            print("Checkpoint 3")
 
             # =================
             # Update generator
@@ -127,7 +123,6 @@ def main():
             fake_input_G = torch.cat((fake_images, high_res_images), dim=1)
             fake_pred_G = discriminator(fake_input_G)
             loss_G = criterion(fake_pred_G, True)
-            print("Checkpoint 4")
 
             loss_G.backward()
             opt_G.step()
@@ -141,7 +136,6 @@ def main():
             )
             epoch_metrics.sensitivities.append(sensitivity)
             epoch_metrics.specificities.append(specificity)
-            print("Checkpoint 5")
 
             # Logging
             # if (i + 1) % 2 == 0:
@@ -160,7 +154,6 @@ def main():
         train_loss.append(training_loss_accum / len(train_loader))
         epoch_metrics_dices.append(dice / len(train_loader))
         epoch_metrics_ious.append(iou / len(train_loader))
-        print("Checkpoint 6")
 
         # Validation loop
         generator.eval()
@@ -169,40 +162,56 @@ def main():
             val_loss_accum = 0
             ssim_index = 0
             psnr_value = 0
-            print("Checkpoint 7")
-            for val_data in val_loader:
+
+            for j, val_data in enumerate(val_loader, 0):
                 high_res_images, low_res_images = val_data[1], val_data[0]
-                print("Checkpoint 8")
                 pred = generator(low_res_images)
-                print("Checkpoint 9")
                 ssim_index_, psnr_value_ = calculate_ssim_psnr(
                     pred, high_res_images, data_range=1.0
                 )
                 ssim_index += ssim_index_
                 psnr_value += psnr_value_
-                temp = discriminator(fake_input_G)
-                print("Checkpoint 10")
-                loss_G_val = criterion(
-                    temp,
-                    torch.ones_like(temp),
-                )
+
+                # Create discriminator inputs for real and fake samples
+                real_input_D = torch.cat((high_res_images, high_res_images), dim=1)
+                fake_input_D = torch.cat((pred.detach(), high_res_images), dim=1)
+
+                # Calculate Discriminator loss on real and fake data
+                real_output_D = discriminator(real_input_D)
+                fake_output_D = discriminator(fake_input_D)
+                loss_D_real = criterion(real_output_D, torch.ones_like(real_output_D))
+                loss_D_fake = criterion(fake_output_D, torch.zeros_like(fake_output_D))
+                loss_D_val = (loss_D_real + loss_D_fake) / 2
+
+                # Calculate Generator validation loss
+                fake_input_G = torch.cat((pred, high_res_images), dim=1)
+                fake_output_G = discriminator(fake_input_G)
+                loss_G_val = criterion(fake_output_G, torch.ones_like(fake_output_G))
+
                 val_loss_accum += loss_G_val.item()
+
+                print(
+                    f"Validation Step | "
+                    f"Batch: {j + 1}/{len(val_loader)} | "
+                    f"Generator Loss: {loss_G_val.item():.4f} | "
+                    f"Discriminator Loss: {loss_D_val.item():.4f} | "
+                    f"SSIM Index: {ssim_index_:.4f} | "
+                    f"PSNR: {psnr_value_:.2f} dB"
+                )
 
             val_loss.append(val_loss_accum / len(val_loader))
             epoch_metrics_ssims.append(ssim_index / len(val_loader))
             epoch_metrics_psnrs.append(psnr_value / len(val_loader))
 
-        print("Checkpoint 11")
         # Update learning rate
         scheduler_G.step()
         scheduler_D.step()
-        print("Checkpoint 12")
 
     # Plotting and saving loss plots
     save_plots(epoch_metrics_dices, "Dice Coefficient", num_epochs=num_epochs)
     save_plots(epoch_metrics_ious, "IOU", num_epochs=num_epochs)
-    # save_plots(epoch_metrics_ssims, "SSIM", num_epochs=num_epochs)
-    # save_plots(epoch_metrics_psnrs, "PSNRS", num_epochs=num_epochs)
+    save_plots(epoch_metrics_ssims, "SSIM", num_epochs=num_epochs)
+    save_plots(epoch_metrics_psnrs, "PSNRS", num_epochs=num_epochs)
 
     save_metrics_plot(
         train_loss,  # Training losses
@@ -214,8 +223,8 @@ def main():
     )
 
     # Save models for later use
-    # torch.save(generator.state_dict(), "generator.pth")
-    # torch.save(discriminator.state_dict(), "discriminator.pth")
+    torch.save(generator.state_dict(), "generator.pth")
+    torch.save(discriminator.state_dict(), "discriminator.pth")
 
 
 if __name__ == "__main__":
