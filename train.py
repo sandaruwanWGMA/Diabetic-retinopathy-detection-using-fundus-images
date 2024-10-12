@@ -91,24 +91,10 @@ def main():
             # Update discriminator
             # ===================
             discriminator.zero_grad()
-            # print(f"epoch: {epoch}")
-            # print("Real Input: ", real_input.shape)
             real_pred = discriminator(real_input)
-            # print("Real Pred: ", real_pred)
-            # print("Real Pred Shape: ", real_pred.shape)
-            # print("Real Pred: ", real_pred)
-            loss_D_real = criterion(real_pred, torch.ones_like(real_pred))
-            # print("loss_D_real: ", loss_D_real)
-            # print("loss_D_real: ", loss_D_real)
-
+            loss_D_real = criterion(real_pred, True)
             fake_pred = discriminator(fake_input)
-            # print("Fake Pred Shape: ", fake_pred.shape)
-            # print("Fake Pred: ", fake_pred)
-            loss_D_fake = criterion(
-                torch.tensor(fake_pred), torch.zeros_like(fake_pred)
-            )
-            # print("loss_D_fake: ", loss_D_fake)
-
+            loss_D_fake = criterion(fake_pred, False)
             loss_D = (loss_D_real + loss_D_fake) / 2
             loss_D.backward()
             opt_D.step()
