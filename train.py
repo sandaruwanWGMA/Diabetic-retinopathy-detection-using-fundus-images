@@ -55,8 +55,8 @@ def main():
     scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
 
     # Creating dataset instances
-    train_dataset = MRIDataset("./datasets/train_filenames.txt", limit=10)
-    val_dataset = MRIDataset("./datasets/val_filenames.txt", limit=10)
+    train_dataset = MRIDataset("./datasets/train_filenames.txt", limit=2)
+    val_dataset = MRIDataset("./datasets/val_filenames.txt", limit=1)
 
     # Creating data loaders
     train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
