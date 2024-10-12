@@ -55,11 +55,11 @@ def main():
     scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
 
     # Creating dataset instances
-    train_dataset = MRIDataset("./datasets/train_filenames.txt", limit=3)
-    val_dataset = MRIDataset("./datasets/val_filenames.txt", limit=1)
+    train_dataset = MRIDataset("./datasets/train_filenames.txt")
+    val_dataset = MRIDataset("./datasets/val_filenames.txt")
 
     # Creating data loaders
-    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=3, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
     num_epochs = 50
@@ -70,7 +70,6 @@ def main():
     epoch_metrics_ssims = []
     epoch_metrics_psnrs = []
     for epoch in range(num_epochs):
-        print("EPOCH: ", epoch)
         # Reset or initialize metrics for the epoch
         epoch_metrics = MetricTracker()
         training_loss_accum = 0
