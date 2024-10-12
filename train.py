@@ -159,31 +159,31 @@ def main():
         epoch_metrics_ious.append(iou / len(train_loader))
 
         # Validation loop
-        generator.eval()
-        discriminator.eval()
-        with torch.no_grad():
-            val_loss_accum = 0
-            ssim_index = 0
-            psnr_value = 0
-            for val_data in val_loader:
-                high_res_images, low_res_images = val_data[1], val_data[0]
+        # generator.eval()
+        # discriminator.eval()
+        # with torch.no_grad():
+        #     val_loss_accum = 0
+        #     ssim_index = 0
+        #     psnr_value = 0
+        #     for val_data in val_loader:
+        #         high_res_images, low_res_images = val_data[1], val_data[0]
 
-                pred = generator(low_res_images)
-                ssim_index_, psnr_value_ = calculate_ssim_psnr(
-                    pred, high_res_images, data_range=1.0
-                )
-                ssim_index += ssim_index_
-                psnr_value += psnr_value_
-                temp = discriminator(fake_input_G)
-                loss_G_val = criterion(
-                    temp,
-                    torch.ones_like(temp),
-                )
-                val_loss_accum += loss_G_val.item()
+        #         pred = generator(low_res_images)
+        #         ssim_index_, psnr_value_ = calculate_ssim_psnr(
+        #             pred, high_res_images, data_range=1.0
+        #         )
+        #         ssim_index += ssim_index_
+        #         psnr_value += psnr_value_
+        #         temp = discriminator(fake_input_G)
+        #         loss_G_val = criterion(
+        #             temp,
+        #             torch.ones_like(temp),
+        #         )
+        #         val_loss_accum += loss_G_val.item()
 
-            val_loss.append(val_loss_accum / len(val_loader))
-            epoch_metrics_ssims.append(ssim_index / len(val_loader))
-            epoch_metrics_psnrs.append(psnr_value / len(val_loader))
+        #     val_loss.append(val_loss_accum / len(val_loader))
+        #     epoch_metrics_ssims.append(ssim_index / len(val_loader))
+        #     epoch_metrics_psnrs.append(psnr_value / len(val_loader))
 
         # Update learning rate
         scheduler_G.step()
@@ -192,8 +192,8 @@ def main():
     # Plotting and saving loss plots
     save_plots(epoch_metrics_dices, "Dice Coefficient", num_epochs=num_epochs)
     save_plots(epoch_metrics_ious, "IOU", num_epochs=num_epochs)
-    save_plots(epoch_metrics_ssims, "SSIM", num_epochs=num_epochs)
-    save_plots(epoch_metrics_psnrs, "PSNRS", num_epochs=num_epochs)
+    # save_plots(epoch_metrics_ssims, "SSIM", num_epochs=num_epochs)
+    # save_plots(epoch_metrics_psnrs, "PSNRS", num_epochs=num_epochs)
 
     save_metrics_plot(
         train_loss,  # Training losses
