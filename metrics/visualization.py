@@ -47,7 +47,6 @@ def save_plots(metrics, title, num_epochs, folder="results", step=2):
 
 def save_metrics_plot(
     train_metrics,
-    val_metrics,
     title,
     xlabel,
     ylabel,
@@ -71,7 +70,6 @@ def save_metrics_plot(
     os.makedirs(folder, exist_ok=True)
     plt.figure()
     plt.plot(np.arange(1, len(train_metrics) + 1), train_metrics, label="Train")
-    plt.plot(np.arange(1, len(val_metrics) + 1), val_metrics, label="Validation")
     plt.title(title)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
