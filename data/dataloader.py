@@ -48,23 +48,25 @@ import os
 
 
 class MRIDataset(Dataset):
-    def __init__(self, txt_file, transform=None):
+    def __init__(self, txt_file, transform=None, limit=None):
         """
         Args:
             txt_file (string): Path to the text file with pairs of MRI file paths.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
+            transform (callable, optional): Optional transform to be applied on a sample.
+            limit (int, optional): Maximum number of file pairs to load.
         """
-        # Reading the file pairs from the provided text file
-        self.mri_pairs = self._read_txt_file(txt_file)
         self.transform = transform
+        self.limit = limit
+        self.mri_pairs = self._read_txt_file(txt_file)
 
     def _read_txt_file(self, txt_file):
         """Reads a text file and returns a list of tuples (high_res_path, low_res_path)."""
         pairs = []
         with open(txt_file, "r") as file:
             lines = file.readlines()
-            for line in lines:
+            for line in lines[
+                : self.limit
+            ]:  # Apply the limit on the number of lines read
                 high_res_path, low_res_path = line.strip().split(", ")
                 pairs.append((high_res_path, low_res_path))
         return pairs
