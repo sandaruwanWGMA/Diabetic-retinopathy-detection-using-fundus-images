@@ -57,6 +57,3 @@ class CustomUNet(nn.Module):
         x = self.depthUpSamplingNet(x)
 
         return x
-
-
-print(CustomUNet())

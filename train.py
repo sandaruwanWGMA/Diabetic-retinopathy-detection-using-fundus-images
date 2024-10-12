@@ -4,7 +4,6 @@ from torch import optim
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-
 # Import your model definitions
 from models.volumetric_resnet.custom_video_resnet import CustomResnet
 from models.volumetric_unet.custom_volumetric_unet import CustomUNet
