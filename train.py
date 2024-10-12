@@ -54,14 +54,11 @@ def main():
     scheduler_G = get_scheduler(opt_G, {"lr_policy": "step", "lr_decay_iters": 10})
     scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
 
-    # Define the path to the base directory containing both Low-Res and High-Res directories
-    base_dir = "/kaggle/input/high-res-and-low-res-without-resample/Not Resampled"
+    # Creating dataset instances
+    train_dataset = MRIDataset("./datasets/train_filenames.txt")
+    val_dataset = MRIDataset("./datasets/val_filenames.txt")
 
-    # Create the dataset and dataloader
-    mri_dataset = MRIDataset(base_dir)
-    # dataloader = DataLoader(mri_dataset, batch_size=1, shuffle=True)  # TEMPORARY
-
-    train_dataset, val_dataset, _ = split_dataset(mri_dataset)
+    # Creating data loaders
     train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 

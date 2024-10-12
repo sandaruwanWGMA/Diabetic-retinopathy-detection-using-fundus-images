@@ -75,7 +75,7 @@ def main():
 
     # for val_data in val_loader:
     #     high_res_images2, low_res_images2 = val_data[1], val_data[0]
-    #     print(low_res_images2
+    #     print(low_res_images2)
 
 
 if __name__ == "__main__":
