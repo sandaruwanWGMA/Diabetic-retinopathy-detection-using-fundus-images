@@ -62,8 +62,8 @@ def main():
     # dataloader = DataLoader(mri_dataset, batch_size=1, shuffle=True)  # TEMPORARY
 
     train_dataset, val_dataset, _ = split_dataset(mri_dataset)
-    train_loader = DataLoader(train_dataset, batch_size=2, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=2, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
     num_epochs = 50
     train_loss = []
