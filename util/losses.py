@@ -123,8 +123,3 @@ def cal_gradient_penalty(
         return gradient_penalty, gradients
     else:
         return 0.0, None
-
-
-criterion = GANLoss(gan_mode="lsgan")
-loss_D_fake = criterion(torch.tensor(0), False)
-print("loss_D_fake: ", loss_D_fake)
