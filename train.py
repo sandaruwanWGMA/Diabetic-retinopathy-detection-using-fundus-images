@@ -55,12 +55,12 @@ def main():
     scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
 
     # Creating dataset instances
-    train_dataset = MRIDataset("./datasets/train_filenames.txt", limit=2)
-    val_dataset = MRIDataset("./datasets/val_filenames.txt", limit=1)
+    train_dataset = MRIDataset("./datasets/train_filenames.txt", limit=3)
+    # val_dataset = MRIDataset("./datasets/val_filenames.txt", limit=1)
 
     # Creating data loaders
     train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
+    # val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
 
     num_epochs = 50
     train_loss = []
@@ -70,6 +70,7 @@ def main():
     epoch_metrics_ssims = []
     epoch_metrics_psnrs = []
     for epoch in range(num_epochs):
+        print("EPOCH: ", epoch)
         # Reset or initialize metrics for the epoch
         epoch_metrics = MetricTracker()
         training_loss_accum = 0
@@ -87,6 +88,8 @@ def main():
             real_input = torch.cat((high_res_images, high_res_images), dim=1)
             fake_input = torch.cat((fake_images.detach(), high_res_images), dim=1)
 
+            print("Checkpoint 1")
+
             # ===================
             # Update discriminator
             # ===================
@@ -97,6 +100,7 @@ def main():
             # print("Real Pred: ", real_pred)
             # print("Real Pred Shape: ", real_pred.shape)
             # print("Real Pred: ", real_pred)
+            print("Checkpoint 2")
             loss_D_real = criterion(real_pred, torch.ones_like(real_pred))
             # print("loss_D_real: ", loss_D_real)
             # print("loss_D_real: ", loss_D_real)
@@ -112,6 +116,7 @@ def main():
             loss_D = (loss_D_real + loss_D_fake) / 2
             loss_D.backward()
             opt_D.step()
+            print("Checkpoint 3")
 
             # =================
             # Update generator
@@ -122,6 +127,7 @@ def main():
             fake_input_G = torch.cat((fake_images, high_res_images), dim=1)
             fake_pred_G = discriminator(fake_input_G)
             loss_G = criterion(fake_pred_G, True)
+            print("Checkpoint 4")
 
             loss_G.backward()
             opt_G.step()
@@ -135,6 +141,7 @@ def main():
             )
             epoch_metrics.sensitivities.append(sensitivity)
             epoch_metrics.specificities.append(specificity)
+            print("Checkpoint 5")
 
             # Logging
             # if (i + 1) % 2 == 0:
@@ -185,6 +192,7 @@ def main():
         # Update learning rate
         scheduler_G.step()
         scheduler_D.step()
+        print("Checkpoint 6")
 
     # Plotting and saving loss plots
     save_plots(epoch_metrics_dices, "Dice Coefficient", num_epochs=num_epochs)
