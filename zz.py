@@ -60,19 +60,18 @@ def main():
     val_dataset = MRIDataset("./datasets/val_filenames.txt", limit=10)
 
     # Creating data loaders
-    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=6, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=5, shuffle=False)
 
-    print(len(val_loader))
+    # print(len(val_loader))
 
     # for i, data in enumerate(train_loader, 0):
     #     high_res_images = data[1]
     #     low_res_images = data[0]
 
-    # for i, data in enumerate(val_loader, 0):
-    #     high_res_images2 = data[1]
-    #     low_res_images2 = data[0]
-    #     print(low_res_images2)
+    for i, data in enumerate(val_loader):
+        print("i: ", i)
+        print(len(data))
 
     # for val_data in val_loader:
     #     high_res_images2, low_res_images2 = val_data[1], val_data[0]

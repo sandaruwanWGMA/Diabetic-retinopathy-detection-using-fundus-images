@@ -2,10 +2,6 @@ from torch.nn import init
 from torch.optim import lr_scheduler
 
 
-from torch.nn import init
-from torch.optim import lr_scheduler
-
-
 def get_scheduler(optimizer, opt):
     """Return a learning rate scheduler
 
