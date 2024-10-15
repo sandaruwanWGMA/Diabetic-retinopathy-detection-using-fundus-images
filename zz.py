@@ -70,8 +70,7 @@ def main():
     #     low_res_images = data[0]
 
     for i, data in enumerate(val_loader):
-        print("i: ", i)
-        print(len(data))
+        print(len(data[0]))
 
     # for val_data in val_loader:
     #     high_res_images2, low_res_images2 = val_data[1], val_data[0]
