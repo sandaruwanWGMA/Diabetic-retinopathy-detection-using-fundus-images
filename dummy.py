@@ -1,68 +1,50 @@
+# train.py
+
+import os
+import time
 import torch
-from torch import optim
 from torch.utils.data import DataLoader
-from torchvision import transforms
+from model.create_model import create_model
 
+# from data import create_dataset
+from options.train_options import TrainOptions
+from utils.visualizer import Visualizer
+from utils.checkpointing import save_checkpoint, load_checkpoint
 
-# Import your model definitions
-from models.volumetric_resnet.custom_video_resnet import Modified3DResNet
-from models.volumetric_unet.custom_volumetric_unet import CustomUNet
-
-# Import utility functions
-from util.losses import GANLoss, cal_gradient_penalty
-from util.schedulers import get_scheduler
-
-# Import Custom Dataset
 from data.dataloader import MRIDataset
 
 
-def setup_device():
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-
 def main():
-    device = setup_device()
+    # Parse options
+    opt = TrainOptions().parse()
 
-    # Initialize the generator and discriminator
-    generator = Modified3DResNet().to(device)
-    discriminator = CustomUNet().to(device)
+    visualizer = Visualizer(opt)
+    unique_values = 8000
+    losses_dict_arr = {
+        "sr_loss_arr": [x * 0.1 for x in range(unique_values)],
+        "gdn_loss_arr": [x * 0.2 for x in range(unique_values)],
+        "gan_loss_arr": [x * 0.3 for x in range(unique_values)],
+    }
 
-    # Optimizers
-    opt_G = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
-    opt_D = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    # Determine the number of unique values in each loss array
+    unique_counts = {k: len(set(v)) for k, v in losses_dict_arr.items()}
+    max_unique_count = max(
+        unique_counts.values()
+    )  # Find the maximum number of unique values
 
-    # Losses
-    criterion = GANLoss(gan_mode="lsgan").to(device)
+    # Calculate total_iters based on the max number of unique values and batch size
+    total_iters = list(range(0, max_unique_count * opt.batch_size, opt.batch_size))
 
-    # Learning rate schedulers
-    scheduler_G = get_scheduler(opt_G, {"lr_policy": "step", "lr_decay_iters": 10})
-    scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
-
-    # Define the path to the base directory containing both Low-Res and High-Res directories
-    base_dir = "./MRI Dataset"
-
-    # Create the dataset and dataloader
-    mri_dataset = MRIDataset(base_dir)
-    dataloader = DataLoader(mri_dataset, batch_size=1, shuffle=True)
-
-    num_epochs = 50
-    for epoch in range(num_epochs):
-        for i, data in enumerate(dataloader, 0):
-            print(f"epoch number: {epoch} and i: {i}")
-            high_res_images = data[1].to(device)
-            low_res_images = data[1].to(device)
-
-            # ===================
-            # Update discriminator
-            # ===================
-            discriminator.zero_grad()
-            # Train with real MRI images
-            real_pred = discriminator(high_res_images)
-            loss_D_real = criterion(real_pred, True)
-            # Train with fake MRI images
-            fake_images = generator(low_res_images)
-            # fake_pred = discriminator(fake_images.detach())
+    visualizer.plot_and_save_losses(
+        output_path=opt.plots_out_dir,
+        total_iters=total_iters,
+        losses_dict_arr=losses_dict_arr,
+    )
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"Error during training: {e}")
+        # Optionally add code to handle specific exceptions and perform cleanup

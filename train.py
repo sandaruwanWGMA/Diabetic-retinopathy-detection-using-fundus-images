@@ -1,168 +1,214 @@
+# train.py
+
 import os
+import time
 import torch
-from torch import optim
-from torch.utils.data import DataLoader
-from torchvision import transforms
+from torch.utils.data import DataLoader, Subset
+import numpy as np
+from model.create_model import create_model
 
-# Import your model definitions
-from models.volumetric_resnet.custom_video_resnet import CustomResnet
-from models.volumetric_unet.custom_volumetric_unet import CustomUNet
+# from data import create_dataset
+from options.train_options import TrainOptions
+from utils.visualizer import Visualizer
+from utils.checkpointing import save_checkpoint, load_checkpoint
 
-# Import utility functions
-from util.losses import GANLoss, cal_gradient_penalty
-from util.schedulers import get_scheduler
-
-from metrics.metrics import (
-    MetricTracker,
-    calculate_dice,
-    calculate_iou,
-    calculate_sensitivity_specificity,
-    calculate_ssim_psnr,
-)
-
-from metrics.save_image_triplets import save_image_triplets
-from metrics.visualization import save_plots, save_metrics_plot
-
-# Import Custom Dataset
 from data.dataloader import MRIDataset
-from data.data_handling import split_dataset
-
-
-def setup_device():
-    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def main():
-    device = setup_device()
+    # Parse options
+    opt = TrainOptions().parse()
 
-    # Initialize the generator and discriminator
-    generator = CustomUNet()
-    discriminator = CustomResnet()
+    print(f"Loading checkpoint on device: {opt.device}")
 
-    # Initialize Metric Tracker
-    metrics = MetricTracker()
+    # Create a model based on the options
+    model = create_model(opt)
 
-    # Optimizers
-    opt_G = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999))
-    opt_D = optim.Adam(discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999))
+    # Base directory
+    base_dir = "../mri_coupled_dataset"
 
-    # Losses
-    criterion = GANLoss(gan_mode="lsgan")
+    # train_data = "dataset/train_filenames.txt"
 
-    # Learning rate schedulers
-    scheduler_G = get_scheduler(opt_G, {"lr_policy": "step", "lr_decay_iters": 10})
-    scheduler_D = get_scheduler(opt_D, {"lr_policy": "step", "lr_decay_iters": 10})
+    # Initialize the datasets
+    train_dataset = MRIDataset(base_dir=base_dir)
 
-    # Creating dataset instances
-    train_dataset = MRIDataset("./datasets/train_filenames.txt")
-    val_dataset = MRIDataset("./datasets/val_filenames.txt")
+    # Select a random subset of 20 items
+    subset_indices = np.random.choice(len(train_dataset), 20, replace=False)
+    train_subset = Subset(train_dataset, subset_indices)
 
-    # Creating data loaders
-    train_loader = DataLoader(train_dataset, batch_size=3, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
-
-    num_epochs = 50
-    train_loss = []
-    epoch_metrics_dices = []
-    epoch_metrics_ious = []
-    epoch_metrics_ssims = []
-    epoch_metrics_psnrs = []
-    for epoch in range(num_epochs):
-        # Reset or initialize metrics for the epoch
-        epoch_metrics = MetricTracker()
-        training_loss_accum = 0
-        dice = 0
-        iou = 0
-
-        for i, data in enumerate(train_loader, 0):
-            high_res_images = data[1]
-            low_res_images = data[0]
-
-            # Generate fake images from low-res images
-            fake_images = generator(low_res_images)
-
-            # Prepare data for the discriminator
-            real_input = torch.cat((high_res_images, high_res_images), dim=1)
-            fake_input = torch.cat((fake_images.detach(), high_res_images), dim=1)
-
-            # ===================
-            # Update discriminator
-            # ===================
-            discriminator.zero_grad()
-            real_pred = discriminator(real_input)
-            loss_D_real = criterion(real_pred, True)
-            fake_pred = discriminator(fake_input)
-            loss_D_fake = criterion(fake_pred, False)
-            loss_D = (loss_D_real + loss_D_fake) / 2
-            loss_D.backward()
-            opt_D.step()
-
-            # =================
-            # Update generator
-            # =================
-            generator.zero_grad()
-
-            # We calculate the loss based on the generator's fake output.
-            fake_input_G = torch.cat((fake_images, high_res_images), dim=1)
-            fake_pred_G = discriminator(fake_input_G)
-            loss_G = criterion(fake_pred_G, True)
-
-            loss_G.backward()
-            opt_G.step()
-
-            # Calculate and record metrics
-            dice += calculate_dice(fake_images, high_res_images)
-            iou += calculate_iou(fake_images, high_res_images)
-
-            sensitivity, specificity = calculate_sensitivity_specificity(
-                fake_images, high_res_images
-            )
-            epoch_metrics.sensitivities.append(sensitivity)
-            epoch_metrics.specificities.append(specificity)
-
-            # Logging
-            # if (i + 1) % 2 == 0:
-            #     print(
-            #         f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
-            #         f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
-            #     )
-            print(
-                f"Epoch [{epoch + 1}/{num_epochs}], Step [{i + 1}/{len(train_loader)}], "
-                f"Loss_D: {loss_D.item()}, Loss_G: {loss_G.item()}"
-            )
-
-            epoch_metrics.losses.append((loss_G.item() + loss_D.item()) / 2)
-            training_loss_accum += loss_G.item()
-
-        train_loss.append(training_loss_accum / len(train_loader))
-        epoch_metrics_dices.append(dice / len(train_loader))
-        epoch_metrics_ious.append(iou / len(train_loader))
-
-        # Update learning rate
-        scheduler_G.step()
-        scheduler_D.step()
-
-    # Plotting and saving loss plots
-    save_plots(epoch_metrics_dices, "Dice Coefficient", num_epochs=num_epochs)
-    save_plots(epoch_metrics_ious, "IOU", num_epochs=num_epochs)
-
-    save_metrics_plot(
-        train_loss,  # Training losses
-        "Loss vs No of Epoches",
-        "Epoches",
-        "Loss",
-        num_epochs=num_epochs,
+    # Create the data loaders for the subset
+    train_loader = DataLoader(
+        train_subset,
+        batch_size=opt.batch_size,
+        shuffle=True,
+        num_workers=opt.num_workers,
     )
 
-    # Save models for later use
-    torch.save(generator.state_dict(), "generator.pth")
-    torch.save(discriminator.state_dict(), "discriminator.pth")
+    # dataset = create_dataset(opt)
+    # dataloader = DataLoader(
+    #     dataset, batch_size=opt.batch_size, shuffle=True, num_workers=opt.num_workers
+    # )
+    dataset_size = len(train_dataset)
+    print(f"The number of training images = {dataset_size}")
+
+    # Create visualizer
+    visualizer = Visualizer(opt)
+
+    # Optionally resume training
+    if opt.continue_train:
+        load_checkpoint(model, opt.checkpoint_dir, opt.which_epoch, str(opt.device))
+        print(f"Loading checkpoint on device: {opt.device}")
+
+    # Training loop
+    total_iters = 0
+    losses_dict_arr = {"SR Loss": [], "GDN Loss": [], "GAN Loss": []}
+    for epoch in range(opt.epoch_count, opt.n_epochs + opt.n_epochs_decay + 1):
+        epoch_start_time = time.time()
+        epoch_iter = 0
+        mri_vol_index = 0
+
+        for i, data in enumerate(train_loader, 0):
+            epoch_iter += 1
+            for j in range(data[0].size(0)):
+                mri_vol_index += 1
+                low_res_image, high_res_image = data[0][j], data[1][j]
+
+                if high_res_image.shape[2:] != low_res_image.shape[2:]:
+                    print(
+                        f"Mismatched shapes in batch {i}: HR shape {high_res_image.shape}, LR shape {low_res_image.shape}"
+                    )
+                    continue
+
+                current_batch_size = len(data[0])
+                total_iters += current_batch_size
+
+                mri_vol = {"LR": low_res_image, "HR": high_res_image}
+
+                model.set_input(mri_vol)  # Prepare input data by slicing the MRI volume
+
+                # Process each slice in the current volume
+                num_slices = len(model.lr_slices)
+                for slice_index in range(num_slices):
+                    lr_slice, hr_slice = model.get_slice_pair(slice_index)
+
+                    # Forward, backward pass, and optimize with additional parameters
+                    model.optimize_parameters(
+                        lr_images=lr_slice,
+                        hr_images=hr_slice,
+                        lambda_tv=opt.lambda_tv,
+                        alpha_blur=opt.alpha_blur,
+                        angle=opt.angle,
+                        translation=(opt.translation_x, opt.translation_y),
+                        weight_sr=opt.weight_sr,
+                        weight_disc=opt.weight_disc,
+                        weight_gdn=opt.weight_gdn,
+                        alpha_l1=opt.alpha_l1,
+                        beta_ssim=opt.beta_ssim,
+                        gamma_psnr=opt.gamma_psnr,
+                    )
+
+                    # Print loss information at the specified frequency
+                    # if total_iters % opt.print_freq == 0:
+                    #     losses = model.get_current_losses()
+                    #     t_comp = (time.time() - epoch_start_time) / epoch_iter
+                    #     visualizer.print_current_losses(
+                    #         epoch, epoch_iter, losses, t_comp, slice_index + 1, j + 1
+                    #     )
+
+                # Save the latest model at the specified frequency
+                # if total_iters % opt.save_latest_freq == 0:
+                #     print(
+                #         "Saving the latest model (epoch %d, total_iters %d)"
+                #         % (epoch, total_iters)
+                #     )
+                #     # save_checkpoint(
+                #     #     model, opt.checkpoint_dir, "latest", epoch, total_iters
+                #     # )
+                #     model.save_checkpoint(
+                #         opt.checkpoint_dir_vol,
+                #         ["sr epoch_%d" % epoch, "vgg_patchgan epoch_%d" % epoch],
+                #         epoch,
+                #         total_iters,
+                #     )
+
+                # Display visuals at the specified frequency of the slices of a certain MRI Volume
+                # if total_iters % opt.display_freq == 0:
+                # model.save_volume(epoch=epoch)
+
+                total_loss_sr = model.get_total_loss_of_volume()["loss_sr"] / num_slices
+                total_loss_gdn = (
+                    model.get_total_loss_of_volume()["gdnLoss"] / num_slices
+                )
+                total_loss_gan = (
+                    model.get_total_loss_of_volume()["loss_gan"] / num_slices
+                )
+
+                losses_dict_arr["SR Loss"].append(total_loss_sr)
+                losses_dict_arr["GDN Loss"].append(total_loss_gdn)
+                losses_dict_arr["GAN Loss"].append(total_loss_gan)
+
+                # print(
+                #     "Epoch {}/{} | Batch Index: {} | MRI Volume Index: {} | SR Loss: {:.3f} | GDN Loss: {:.3f} | GAN Loss: {:.3f} | Time Taken: {} sec".format(
+                #         epoch,
+                #         opt.n_epochs + opt.n_epochs_decay,
+                #         epoch_iter,
+                #         mri_vol_index,
+                #         total_loss_sr,
+                #         total_loss_gdn,
+                #         total_loss_gan,
+                #         int(time.time() - epoch_start_time),
+                #     )
+                # )
+
+                losses = {
+                    "sr": total_loss_sr,
+                    "gdn": total_loss_gdn,
+                    "gan": total_loss_gan,
+                }
+
+                visualizer.print_current_statistics(
+                    epoch=epoch,
+                    batch_index=epoch_iter,
+                    mri_vol_index=mri_vol_index,
+                    losses=losses,
+                    time_taken=int(time.time() - epoch_start_time),
+                    total_epochs=opt.n_epochs + opt.n_epochs_decay,
+                )
+
+        # Save the latest model at the specified frequency
+        if epoch % opt.save_epoch_freq == 0:
+            print("Saving the latest model at (epoch %d)" % (epoch))
+            # save_checkpoint(
+            #     model, opt.checkpoint_dir, "latest", epoch, total_iters
+            # )
+            model.save_checkpoint(
+                opt.checkpoint_dir_vol,
+                ["sr epoch_%d" % epoch, "vgg_patchgan epoch_%d" % epoch],
+                epoch,
+                total_iters,
+            )
+
+    # Determine the number of unique values in each loss array
+    unique_counts = {k: len(set(v)) for k, v in losses_dict_arr.items()}
+    max_unique_count = max(unique_counts.values())
+
+    # Calculate total_iters based on the max number of unique values and batch size
+    total_iters_for_plots = list(
+        range(0, max_unique_count * opt.batch_size, opt.batch_size)
+    )
+
+    visualizer.plot_and_save_losses(
+        output_path=opt.plots_out_dir,
+        total_iters=total_iters_for_plots,
+        losses_dict_arr=losses_dict_arr,
+    )
+
+    model.save_final_models()
 
 
 if __name__ == "__main__":
     try:
-        # Set the environment variable
-        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
         main()
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        print(f"Error during training: {e}")
+        # Optionally add code to handle specific exceptions and perform cleanup

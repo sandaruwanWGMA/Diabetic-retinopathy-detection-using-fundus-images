@@ -1,5 +1,4 @@
-torch
-torchvision
-monai
+segmentation-models-pytorch
+piq
 nibabel
-pickleshare
+matplotlib
